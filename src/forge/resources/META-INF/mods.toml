@@ -1,0 +1,20 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+issueTrackerURL="https://github.com/WagYourOrg/UniConfig/issues"
+license = "MPL-2.0"
+
+[[mods]]
+modId = "uniconfig"
+version = "${version}"
+displayName = "UniConfig"
+authors = ["Wagyourtail"]
+description = '''
+Config mod for server/client side config syncing and editing.
+'''
+
+[[dependencies.uniconfig]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.2]"
+ordering = "NONE"
+side = "BOTH"

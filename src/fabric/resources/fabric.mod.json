@@ -1,0 +1,28 @@
+{
+    "schemaVersion": 1,
+    "id": "uniconfig",
+    "version": "${version}",
+    "name": "UniConfig",
+    "description": "Config mod for server/client side config syncing and editing.",
+    "authors": [
+        "wagyourtail"
+    ],
+    "contact": {
+        "homepage": "https://wagyourtail.xyz/",
+        "sources": "https://github.com/WagYourOrg/UniConfig"
+    },
+    "license": "MPL-2.0",
+    "icon": "assets/jsmacros/icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "xyz.wagyourtail.uniconfig.fabric.UniConfigFabric"
+        ]
+    },
+    "mixins": [
+    ],
+    "depends": {
+        "fabricloader": ">=0.14.0",
+        "minecraft": "1.20.2"
+    }
+}

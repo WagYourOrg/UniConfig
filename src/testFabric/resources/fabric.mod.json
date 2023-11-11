@@ -1,0 +1,28 @@
+{
+    "schemaVersion": 1,
+    "id": "uniconfig-test",
+    "version": "${version}",
+    "name": "UniConfig Test",
+    "description": "Config test mod.",
+    "authors": [
+        "wagyourtail"
+    ],
+    "contact": {
+        "homepage": "https://wagyourtail.xyz/",
+        "sources": "https://github.com/WagYourOrg/UniConfig"
+    },
+    "license": "MPL-2.0",
+    "icon": "assets/jsmacros/icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "xyz.wagyourtail.uniconfig.test.fabric.UniConfigTestFabric"
+        ]
+    },
+    "mixins": [
+    ],
+    "depends": {
+        "fabricloader": ">=0.14.0",
+        "minecraft": "1.20.2"
+    }
+}

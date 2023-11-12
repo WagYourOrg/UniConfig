@@ -16,6 +16,12 @@ base {
     archivesName.set("archives_base_name"()!!)
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 repositories {
     maven("https://maven.wagyourtail.xyz/releases")
     mavenCentral()
@@ -64,7 +70,6 @@ unimined.minecraft(forge) {
 
     neoForged {
         loader("forge_version"()!!)
-        (forgeTransformer as FG3MinecraftTransformer).binpatchFile = project.projectDir.toPath().resolve("output.lzma")
     }
 
     defaultRemapJar = true
@@ -83,14 +88,14 @@ unimined.minecraft(testForge) {
 
     neoForged {
         loader("forge_version"()!!)
-        (forgeTransformer as FG3MinecraftTransformer).binpatchFile = project.projectDir.toPath().resolve("output.lzma")
     }
 }
 
 dependencies {
-
-    
-
+    implementation("com.electronwill.night-config:toml:3.6.7")
+    implementation("com.electronwill.night-config:yaml:3.6.7")
+    implementation("com.electronwill.night-config:json:3.6.7")
+    implementation("com.electronwill.night-config:hocon:3.6.7")
 }
 
 tasks.named<ProcessResources>("processFabricResources") {

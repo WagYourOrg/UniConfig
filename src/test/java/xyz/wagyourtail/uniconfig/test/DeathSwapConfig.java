@@ -140,9 +140,14 @@ public class DeathSwapConfig extends UniConfig {
 
     public final Setting<DeathSwapGameMode> gameMode = setting("game_mode", DeathSwapGameMode.NORMAL, Enum::toString, DeathSwapGameMode::valueOf, s -> {
         BrigadierConnector.connect(s, BrigadierConnector.enumValue(DeathSwapGameMode.class));
+        ScreenConnector.enumCycle(s);
     });
 
-    public final Setting<Boolean> craftingCountsTowardsItemCount = setting("crafting_counts_towards_item_count", true, s -> {
+    public final Group itemCount = group("item_count", g -> {
+        ScreenConnector.group(g, gameMode, () -> gameMode.getValue() == DeathSwapGameMode.ITEM_COUNT);
+    });
+
+    public final Setting<Boolean> craftingCountsTowardsItemCount = itemCount.setting("crafting_counts_towards_item_count", true, s -> {
         BrigadierConnector.connect(s, BrigadierConnector.value(BoolArgumentType.bool()));
         ScreenConnector.bool(s);
     });

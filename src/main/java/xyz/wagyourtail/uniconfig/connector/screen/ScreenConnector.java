@@ -4,6 +4,7 @@ import xyz.wagyourtail.uniconfig.Group;
 import xyz.wagyourtail.uniconfig.Setting;
 import xyz.wagyourtail.uniconfig.connector.screen.connector.ScreenBooleanSettingConnector;
 import xyz.wagyourtail.uniconfig.connector.screen.connector.ScreenDoubleSliderSettingConnector;
+import xyz.wagyourtail.uniconfig.connector.screen.connector.ScreenEnumCycleSettingConnector;
 import xyz.wagyourtail.uniconfig.connector.screen.connector.ScreenIntSliderSettingConnector;
 
 import java.util.function.Supplier;
@@ -57,6 +58,12 @@ public final class ScreenConnector {
         setting.connector(new ScreenDoubleSliderSettingConnector(setting, min, max, isEnabled));
     }
 
+    public static <E extends Enum<E>> void enumCycle(Setting<E> setting) {
+        setting.connector(new ScreenEnumCycleSettingConnector<>(setting, () -> true));
+    }
 
+    public static <E extends Enum<E>> void enumCycle(Setting<E> setting, Supplier<Boolean> isEnabled) {
+        setting.connector(new ScreenEnumCycleSettingConnector<>(setting, isEnabled));
+    }
 
 }

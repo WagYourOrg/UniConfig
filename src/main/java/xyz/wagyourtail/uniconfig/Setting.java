@@ -3,6 +3,7 @@ package xyz.wagyourtail.uniconfig;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.Config;
 import net.minecraft.locale.Language;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.ApiStatus;
@@ -108,13 +109,14 @@ public class Setting<T> {
     }
 
     public void setValue(T value) {
-        this.value = value;
-        onSettingUpdate.forEach(c -> c.accept(value));
+        if (value.equals(this.value)) return;
+        setValueNoSave(value);
         group.parentConfig().save(this);
     }
 
     @ApiStatus.Experimental
     public void setValueNoSave(T value) {
+        if (value.equals(this.value)) return;
         this.value = value;
         onSettingUpdate.forEach(c -> c.accept(value));
     }

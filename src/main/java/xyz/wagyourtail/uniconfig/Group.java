@@ -3,6 +3,8 @@ package xyz.wagyourtail.uniconfig;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.Config;
 import net.minecraft.locale.Language;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.ApiStatus;
@@ -163,18 +165,29 @@ public class Group {
         save();
     }
 
-    public Group copyTo(Group group) {
+    public void copyTo(Group group) {
         for (Map.Entry<String, Setting<?>> entry : this.configItems.entrySet()) {
             group.configItems.put(entry.getKey(), entry.getValue().copyTo(group));
         }
         for (Group g : this.children) {
-            group.children.add(g.copyTo(new Group(g.name, group)));
+            Group child = new Group(g.name, group);
+            group.children.add(child);
+            g.copyTo(child);
         }
-        for (GroupConnector connector : this.connectors.values()) {
-            Setting<?> attached = connector.getAttachedSetting() == null ? null : group.configItems.get(connector.getAttachedSetting().name);
-            connector(connector.copyTo(group, attached));
+        if (group.parent != null) {
+            for (GroupConnector connector : this.connectors.values()) {
+                Setting<?> attached;
+                if (connector.getAttachedSetting() == null) {
+                    attached = null;
+                } else {
+                    attached = group.parent.configItems.get(connector.getAttachedSetting().name);
+                    if (attached == null) {
+                        throw new IllegalStateException("attached setting " + connector.getAttachedSetting().name + " not found in group " + group.name);
+                    }
+                }
+                group.connector(connector.copyTo(group, attached));
+            }
         }
-        return group;
     }
 
     /* HELPERS BELOW THIS POINT */
@@ -185,10 +198,10 @@ public class Group {
         return group;
     }
 
-    public Group group(String name, Consumer<Group> preRegister) {
+    public Group group(String name, Consumer<Group> postRegister) {
         Group group = new Group(name, this);
-        preRegister.accept(group);
         children.add(group);
+        postRegister.accept(group);
         return group;
     }
 

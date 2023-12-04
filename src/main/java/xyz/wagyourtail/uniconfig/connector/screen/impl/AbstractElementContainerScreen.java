@@ -27,7 +27,9 @@ public abstract class AbstractElementContainerScreen extends Screen {
         this.parent = parent;
         this.group = group;
         if (allowCancel) {
-            this.groupCopy = group.copyTo(new UniConfig(group.parentConfig().name));
+            UniConfig config = new UniConfig(group.name);
+            this.groupCopy = config;
+            group.copyTo(config);
         } else {
             this.groupCopy = group;
         }

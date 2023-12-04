@@ -19,10 +19,10 @@ public abstract class GroupConnector {
         return item;
     }
 
+    @Nullable
     public Setting<?> getAttachedSetting() {
         return attachedSetting;
     }
-
 
     public abstract GroupConnector copyTo(Group item, @Nullable Setting<?> attachedSetting);
 

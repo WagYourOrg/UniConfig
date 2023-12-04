@@ -55,7 +55,7 @@ public class ScrollScreen extends AbstractElementContainerScreen {
 
     public void onScroll(double current) {
         // place on screen
-        int labelPosX = this.width / 2;
+        int labelPosX = this.width / 2 - 5;
         int widgetPosX = this.width / 2 + 25;
         // place buttons on page
         int i = 0;
@@ -79,11 +79,12 @@ public class ScrollScreen extends AbstractElementContainerScreen {
         // place settings on page
         for (Map.Entry<ScreenSettingConnector<?>, Pair<Label, AbstractWidget>> entry : settings.entrySet()) {
             entry.getValue().first().setPosition(labelPosX - font.width(entry.getValue().first().text), (int) (20 + SPACING / 2 + i * SPACING - current) + entry.getValue().second().getHeight() / 2 - font.lineHeight / 2);
-            entry.getValue().second().setPosition(widgetPosX + (150 - entry.getValue().second().getWidth()), (int) (20 + SPACING / 2 + i++ * SPACING - current));
+            entry.getValue().second().setPosition(widgetPosX + (150 - entry.getValue().second().getWidth()), (int) (20 + SPACING / 2 + i * SPACING - current));
             AbstractWidget group = attachedGroups.get(entry.getKey());
             if (group != null) {
-                group.setPosition(widgetPosX - 40, (int) (20 + SPACING / 2 + i * SPACING - current));
+                group.setPosition(widgetPosX - group.getWidth() - 5, (int) (20 + SPACING / 2 + i * SPACING - current));
             }
+            ++i;
         }
         scrollWidget.setInnerHeight(i * SPACING + SPACING / 2);
     }

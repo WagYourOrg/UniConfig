@@ -19,7 +19,7 @@
             "xyz.wagyourtail.uniconfig.test.fabric.UniConfigTestFabric"
         ],
         "client": [
-            "xyz.wagyourtail.uniconfig.test.fabric.UniConfigTestFabric"
+            "xyz.wagyourtail.uniconfig.test.fabric.UniConfigTestFabricClient"
         ]
     },
     "mixins": [

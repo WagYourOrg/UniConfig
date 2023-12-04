@@ -2,7 +2,7 @@ package xyz.wagyourtail.uniconfig;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.Config;
-import net.minecraft.client.resources.language.I18n;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.ApiStatus;
@@ -70,8 +70,8 @@ public class Group {
         Config config = parentConfig().config;
         if (config instanceof CommentedConfig) {
             String commentKey = String.join(".", translateKeyList()) + ".comment";
-            if (I18n.exists(commentKey)) {
-                ((CommentedConfig) config).setComment(name, I18n.get(commentKey));
+            if (Language.getInstance().has(commentKey)) {
+                ((CommentedConfig) config).setComment(name, Language.getInstance().getOrDefault(commentKey, null));
             }
         }
         if (writeParent && parent != null) {
@@ -105,7 +105,7 @@ public class Group {
     @Nullable
     public MutableComponent description() {
         String comment = String.join(".", translateKeyList()) + ".comment";
-        if (I18n.exists(comment)) {
+        if (Language.getInstance().has(comment)) {
             return Utils.translatable(comment);
         }
         return null;

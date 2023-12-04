@@ -16,19 +16,19 @@ import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierConnector;
 import xyz.wagyourtail.uniconfig.connector.screen.impl.ScrollScreen;
 import xyz.wagyourtail.uniconfig.test.DeathSwapConfig;
 
-public class UniConfigTestFabric implements ModInitializer {
+public class UniConfigTestFabricClient implements ClientModInitializer {
 
-    public static final DeathSwapConfig config = new DeathSwapConfig();
-
+    @Environment(EnvType.CLIENT)
+    public static final KeyMapping DEATH_SWAP_KEY = new KeyMapping("deathswap.config", InputConstants.Type.KEYSYM, InputConstants.KEY_J, "key.categories.misc");
     @Override
-    public void onInitialize() {
-
-        CommandRegistrationCallback.EVENT.register((d, b, s) -> {
-            LiteralArgumentBuilder<CommandSourceStack> deathSwap = Commands.literal("deathswap");
-            BrigadierConnector.register(config, deathSwap, r -> {}, w -> {});
-            d.register(deathSwap);
+    @Environment(EnvType.CLIENT)
+    public void onInitializeClient() {
+        KeyBindingHelper.registerKeyBinding(DEATH_SWAP_KEY);
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (DEATH_SWAP_KEY.consumeClick()) {
+                client.setScreen(new ScrollScreen(client.screen, UniConfigTestFabric.config, true));
+            }
         });
-
     }
 
 }

@@ -10,12 +10,10 @@ import java.util.function.Supplier;
 
 public abstract class ScreenSettingConnector<T> extends SettingConnector<T> {
 
-    protected final Setting<T> access;
     public Supplier<Boolean> enabled;
 
     public ScreenSettingConnector(Setting<T> access, Supplier<Boolean> enabled) {
         super(access);
-        this.access = access;
         this.enabled = enabled;
     }
 

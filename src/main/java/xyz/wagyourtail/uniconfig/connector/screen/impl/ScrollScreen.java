@@ -120,17 +120,17 @@ public class ScrollScreen extends AbstractElementContainerScreen {
 
     @Override
     public void addSetting(ScreenSettingConnector<?> setting) {
-        Label l = new Label(this.font, setting.item.name(), 0, 0, 0xFFFFFF);
+        Label l = new Label(this.font, setting.getItem().name(), 0, 0, 0xFFFFFF);
         this.addRenderableOnly(l);
         if (setting.isSubscreen()) {
             Button b = Button.builder(Component.translatable("uniconfig.screen.subscreen"), (button) -> {
                 assert this.minecraft != null;
-                this.minecraft.setScreen(setting.constructSubscreen(Optional.of(this)).orElseThrow(() -> new RuntimeException("failed to construct subscreen for " + setting.item.nameKey())));
-            }).size(20, 20).tooltip(setting.item.description() == null ? null : Tooltip.create(setting.item.description())).build();
+                this.minecraft.setScreen(setting.constructSubscreen(Optional.of(this)).orElseThrow(() -> new RuntimeException("failed to construct subscreen for " + setting.getItem().nameKey())));
+            }).size(20, 20).tooltip(setting.getItem().description() == null ? null : Tooltip.create(setting.getItem().description())).build();
             this.addRenderableWidget(b);
             settings.put(setting, Pair.of(l, b));
         } else {
-            AbstractWidget w = setting.constructElement().orElseThrow(() -> new RuntimeException("failed to construct element for " + setting.item.nameKey()));
+            AbstractWidget w = setting.constructElement().orElseThrow(() -> new RuntimeException("failed to construct element for " + setting.getItem().nameKey()));
             this.addRenderableWidget(w);
             settings.put(setting, Pair.of(l, w));
         }

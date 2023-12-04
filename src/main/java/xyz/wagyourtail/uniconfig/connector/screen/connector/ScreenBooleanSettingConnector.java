@@ -25,15 +25,7 @@ public class ScreenBooleanSettingConnector extends ScreenSettingConnector<Boolea
 
     @Override
     public Optional<AbstractWidget> constructElement() {
-        Checkbox cb = new Checkbox(0, 0, 20, 20, Component.empty(), access.getValue()) {
-            @Override
-            public void onPress() {
-                super.onPress();
-                access.setValue(this.selected());
-            }
-        };
-        cb.setTooltip(item.description() == null ? null : Tooltip.create(item.description()));
-        return Optional.of(cb);
+        return Optional.of(new Checkbox());
     }
 
     @Override
@@ -41,4 +33,16 @@ public class ScreenBooleanSettingConnector extends ScreenSettingConnector<Boolea
         return new ScreenBooleanSettingConnector(item, enabled);
     }
 
+    private class Checkbox extends net.minecraft.client.gui.components.Checkbox {
+        public Checkbox() {
+            super(0, 0, 20, 20, Component.empty(), item.getValue());
+            setTooltip(item.description() == null ? null : Tooltip.create(item.description()));
+        }
+
+        @Override
+        public void onPress() {
+            super.onPress();
+            item.setValue(this.selected());
+        }
+    }
 }

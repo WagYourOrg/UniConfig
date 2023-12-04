@@ -1,19 +1,16 @@
 plugins {
     id("java")
-    id("xyz.wagyourtail.unimined")// version "1.1.0"
-    id("org.gradle.gradle-profiler") version "0.0.2"
-}
-
-profiler {
-    asyncProfilerLocation.set(file("/opt/async-profiler"))
+    id("xyz.wagyourtail.unimined") version "1.1.0"
+    `maven-publish`
 }
 
 operator fun String.invoke(): String? {
     return project.properties[this] as String?
 }
 
-group = "group"()!!
-version = "version"()!!
+group = "maven_group"()!!
+version = if (project.hasProperty("version_snapshot")) project.properties["version"] as String + "-SNAPSHOT" else project.properties["version"] as String
+
 
 base {
     archivesName.set("archives_base_name"()!!)
@@ -25,6 +22,8 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
+
+    withSourcesJar()
 }
 
 repositories {
@@ -172,5 +171,45 @@ tasks.named<ProcessResources>("processTestForgeResources") {
 
     filesMatching("META-INF/mods.toml") {
         expand("version" to project.version)
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "WagYourMaven"
+            url = if (project.hasProperty("version_snapshot")) {
+                uri("https://maven.wagyourtail.xyz/snapshots/")
+            } else {
+                uri("https://maven.wagyourtail.xyz/releases/")
+            }
+            credentials {
+                username = project.findProperty("mvn.user") as String? ?: System.getenv("USERNAME")
+                password = project.findProperty("mvn.key") as String? ?: System.getenv("TOKEN")
+            }
+        }
+    }
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = project.group as String
+            artifactId = project.properties["archives_base_name"] as String? ?: project.name
+            version = project.version as String
+
+            artifact(tasks["jar"]) {
+                classifier = null
+            }
+
+            artifact(tasks["sourcesJar"]) {
+                classifier = "sources"
+            }
+
+            artifact(tasks["remapForgeJar"]) {
+                classifier = "forge"
+            }
+
+            artifact(tasks["remapFabricJar"]) {
+                classifier = "fabric"
+            }
+        }
     }
 }

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.wagyourtail.uniconfig.connector.SettingConnector;
 import xyz.wagyourtail.uniconfig.nightconfig.nbt.NbtFormat;
 import xyz.wagyourtail.uniconfig.util.Utils;
 
@@ -45,7 +46,7 @@ public class UniConfig extends Group {
 
     /**
      * constructs without a save path, therefore
-     * this should be used for in-memory stuff.
+     * this should be used for in-memory stuff & bulk changes with {@link #readFrom(Group)}.
      * @param name
      */
     public UniConfig(@NotNull String name) {
@@ -123,24 +124,11 @@ public class UniConfig extends Group {
 
     public Component toText() {
         MutableComponent text = Utils.translatable(name).append(": ");
-        SortedMap<String, Setting<?>> sorted = new TreeMap<>(flatItems());
+        Map<String, Setting<?>> sorted = flatItems();
         for (Setting<?> item : sorted.values()) {
             text = text.append("\n").append(item.toText());
         }
         return text;
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public void copyFrom(UniConfig other) {
-        if (this.getClass() != other.getClass()) throw new IllegalArgumentException("Cannot copy from different config type");
-        Map<String, Setting<?>> flatItems = flatItems();
-        for (Map.Entry<String, Setting<?>> item : other.flatItems().entrySet()) {
-            Setting thisItem = flatItems.get(item.getKey());
-            if (thisItem != null) {
-                thisItem.setValueNoSave(item.getValue().getValue());
-            }
-        }
-        save();
     }
 
 }

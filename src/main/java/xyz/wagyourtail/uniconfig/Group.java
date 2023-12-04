@@ -8,6 +8,8 @@ import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import xyz.wagyourtail.uniconfig.connector.GroupConnector;
+import xyz.wagyourtail.uniconfig.connector.SettingConnector;
 import xyz.wagyourtail.uniconfig.util.Utils;
 
 import java.util.*;
@@ -38,9 +40,11 @@ public class Group {
 
     @ApiStatus.Internal
     public Map<String, Setting<?>> flatItems() {
-        Map<String, Setting<?>> items = new HashMap<>();
+        Map<String, Setting<?>> items = new LinkedHashMap<>();
         for (Group child : children) {
-            items.putAll(child.flatItems());
+            for (Map.Entry<String, Setting<?>> entry : child.flatItems().entrySet()) {
+                items.put(child.name + "." + entry.getKey(), entry.getValue());
+            }
         }
         items.putAll(configItems);
         return items;
@@ -98,6 +102,15 @@ public class Group {
         return Utils.translatable(String.join(".", translateKeyList()));
     }
 
+    @Nullable
+    public MutableComponent description() {
+        String comment = String.join(".", translateKeyList()) + ".comment";
+        if (I18n.exists(comment)) {
+            return Utils.translatable(comment);
+        }
+        return null;
+    }
+
     @ApiStatus.Internal
     public List<String> translateKeyList() {
         if (parent != null) {
@@ -132,6 +145,36 @@ public class Group {
     @ApiStatus.Internal
     public <V extends GroupConnector> @Nullable V getConnector(Class<V> connectorClass) {
         return (V) connectors.get(connectorClass);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void readFrom(Group other) {
+        Map<String, Setting<?>> flatItems = flatItems();
+        // ensure all in other exist in this
+        for (Map.Entry<String, Setting<?>> item : other.flatItems().entrySet()) {
+            if (!flatItems.containsKey(item.getKey())) {
+                throw new IllegalArgumentException("Cannot copy item " + item.getKey() + " from " + other.name + " to " + name + " as it does not exist");
+            }
+        }
+        for (Map.Entry<String, Setting<?>> item : other.flatItems().entrySet()) {
+            Setting thisItem = flatItems.get(item.getKey());
+            thisItem.setValueNoSave(item.getValue().getValue());
+        }
+        save();
+    }
+
+    public Group copyTo(Group group) {
+        for (Map.Entry<String, Setting<?>> entry : this.configItems.entrySet()) {
+            group.configItems.put(entry.getKey(), entry.getValue().copyTo(group));
+        }
+        for (Group g : this.children) {
+            group.children.add(g.copyTo(new Group(g.name, group)));
+        }
+        for (GroupConnector connector : this.connectors.values()) {
+            Setting<?> attached = connector.getAttachedSetting() == null ? null : group.configItems.get(connector.getAttachedSetting().name);
+            connector(connector.copyTo(group, attached));
+        }
+        return group;
     }
 
     /* HELPERS BELOW THIS POINT */

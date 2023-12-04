@@ -1,9 +1,15 @@
 package xyz.wagyourtail.uniconfig.connector.screen.impl;
 
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.layouts.EqualSpacingLayout;
+import net.minecraft.client.gui.layouts.FrameLayout;
+import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import xyz.wagyourtail.uniconfig.Group;
-import xyz.wagyourtail.uniconfig.connector.screen.ScreenConnector;
+import xyz.wagyourtail.uniconfig.UniConfig;
+import xyz.wagyourtail.uniconfig.connector.screen.ScreenSettingConnector;
 import xyz.wagyourtail.uniconfig.connector.screen.ScreenGroupConnector;
 
 public abstract class AbstractElementContainerScreen extends Screen {
@@ -11,21 +17,46 @@ public abstract class AbstractElementContainerScreen extends Screen {
     private final Screen parent;
     private final Group group;
 
-    protected AbstractElementContainerScreen(@Nullable Screen parent, Group group) {
+    private final Group groupCopy;
+
+    @SuppressWarnings("NotNullFieldNotInitialized")
+    protected LinearLayout bottomButtons;
+
+    protected AbstractElementContainerScreen(@Nullable Screen parent, Group group, boolean allowCancel) {
         super(group.name());
         this.parent = parent;
         this.group = group;
+        if (allowCancel) {
+            this.groupCopy = group.copyTo(new UniConfig(group.parentConfig().name));
+        } else {
+            this.groupCopy = group;
+        }
     }
 
     @Override
     protected void init() {
         super.init();
+        bottomButtons = LinearLayout.vertical();
+        EqualSpacingLayout line1 = bottomButtons.addChild(new EqualSpacingLayout(308, 20, EqualSpacingLayout.Orientation.HORIZONTAL));
+        line1.addChild(this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), btn -> {
+            save();
+            onClose();
+        }).width(100).build()));
+        if (this.groupCopy != group) {
+            line1.addChild(this.addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), btn -> onClose()).width(100).build()));
+        }
+        bottomButtons.arrangeElements();
+        FrameLayout.centerInRectangle(bottomButtons, 0, this.height - 40, this.width, 40);
         parseGroup();
         parseSettings();
     }
 
+    protected boolean allowCancel() {
+        return this.groupCopy != this.group;
+    }
+
     private void parseGroup() {
-        for (Group group : group.children) {
+        for (Group group : groupCopy.children) {
             ScreenGroupConnector connector = group.getConnector(ScreenGroupConnector.class);
             if (connector == null) {
                 connector = new ScreenGroupConnector(group, null, () -> true);
@@ -35,8 +66,8 @@ public abstract class AbstractElementContainerScreen extends Screen {
     }
 
     private void parseSettings() {
-        group.configItems.values().forEach(e -> {
-            ScreenConnector<?> connector = e.getConnector(ScreenConnector.class);
+        groupCopy.configItems.values().forEach(e -> {
+            ScreenSettingConnector<?> connector = e.getConnector(ScreenSettingConnector.class);
             if (connector != null) {
                 addSetting(connector);
             }
@@ -45,7 +76,7 @@ public abstract class AbstractElementContainerScreen extends Screen {
 
     public abstract void addGroup(ScreenGroupConnector widget);
 
-    public abstract void addSetting(ScreenConnector<?> connector);
+    public abstract void addSetting(ScreenSettingConnector<?> connector);
 
     public abstract void openSubGroupScreen(Group group);
 
@@ -53,5 +84,11 @@ public abstract class AbstractElementContainerScreen extends Screen {
     public void onClose() {
         assert minecraft != null;
         minecraft.setScreen(parent);
+    }
+
+    public void save() {
+        if (groupCopy != group) {
+            group.readFrom(groupCopy);
+        }
     }
 }

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.wagyourtail.uniconfig.connector.SettingConnector;
 import xyz.wagyourtail.uniconfig.util.Utils;
 
 import java.util.*;
@@ -134,6 +135,16 @@ public class Setting<T> {
         List<String> key = group.translateKeyList();
         key.add(name);
         return key;
+    }
+
+    @ApiStatus.Internal
+    public Setting<T> copyTo(Group group) {
+        Setting<T> setting = new Setting<>(name, group, textValue, defaultValue, serializer, deserializer);
+        setting.value = value;
+        for (SettingConnector<T> value : connectors.values()) {
+            setting.connector(value.copyTo(setting));
+        }
+        return setting;
     }
 
     public MutableComponent name() {

@@ -2,17 +2,19 @@ package xyz.wagyourtail.uniconfig.connector.screen.connector;
 
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Tooltip;
 import xyz.wagyourtail.uniconfig.Setting;
-import xyz.wagyourtail.uniconfig.connector.screen.ScreenConnector;
+import xyz.wagyourtail.uniconfig.connector.SettingConnector;
+import xyz.wagyourtail.uniconfig.connector.screen.ScreenSettingConnector;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class ScreenDoubleSliderWrapper extends ScreenConnector<Double> {
+public class ScreenDoubleSliderSettingConnector extends ScreenSettingConnector<Double> {
     private final double min;
     private final double max;
 
-    public ScreenDoubleSliderWrapper(Setting<Double> access, int min, int max,  Supplier<Boolean> enabled) {
+    public ScreenDoubleSliderSettingConnector(Setting<Double> access, double min, double max, Supplier<Boolean> enabled) {
         super(access, enabled);
         this.min = min;
         this.max = max;
@@ -33,7 +35,7 @@ public class ScreenDoubleSliderWrapper extends ScreenConnector<Double> {
 
     @Override
     public Optional<AbstractWidget> constructElement() {
-        return Optional.of(new AbstractSliderButton(0, 0, 150, 20, access.getTextValue(), toRaw(access.getValue())) {
+        AbstractSliderButton asb = new AbstractSliderButton(0, 0, 150, 20, access.getTextValue(), toRaw(access.getValue())) {
 
             @Override
             protected void updateMessage() {
@@ -52,6 +54,13 @@ public class ScreenDoubleSliderWrapper extends ScreenConnector<Double> {
                 access.setValue(fromRaw(value));
             }
 
-        });
+        };
+        asb.setTooltip(item.description() == null ? null : Tooltip.create(item.description()));
+        return Optional.of(asb);
+    }
+
+    @Override
+    public SettingConnector<Double> copyTo(Setting<Double> item) {
+        return new ScreenDoubleSliderSettingConnector(item, min, max, enabled);
     }
 }

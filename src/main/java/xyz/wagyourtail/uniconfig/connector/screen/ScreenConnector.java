@@ -1,38 +1,62 @@
 package xyz.wagyourtail.uniconfig.connector.screen;
 
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.screens.Screen;
-import xyz.wagyourtail.uniconfig.SettingConnector;
+import xyz.wagyourtail.uniconfig.Group;
 import xyz.wagyourtail.uniconfig.Setting;
+import xyz.wagyourtail.uniconfig.connector.screen.connector.ScreenBooleanSettingConnector;
+import xyz.wagyourtail.uniconfig.connector.screen.connector.ScreenDoubleSliderSettingConnector;
+import xyz.wagyourtail.uniconfig.connector.screen.connector.ScreenIntSliderSettingConnector;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
-public abstract class ScreenConnector<T> extends SettingConnector<T> {
+public final class ScreenConnector {
 
-    protected final Setting<T> access;
-    public Supplier<Boolean> enabled;
-
-    public ScreenConnector(Setting<T> access, Supplier<Boolean> enabled) {
-        super(access);
-        this.access = access;
-        this.enabled = enabled;
+    private ScreenConnector() {
     }
 
-    public abstract boolean isSubscreen();
+    /* group connectors */
 
-    // optionals so that it doesn't die on server-side
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public Optional<Screen> constructSubscreen(Optional<Screen> parent) {
-        return Optional.empty();
+    public static void group(Group group) {
+        group.connector(new ScreenGroupConnector(group, null, () -> true));
     }
 
-    public Optional<AbstractWidget> constructElement() {
-        return Optional.empty();
+    public static void group(Group group, Supplier<Boolean> isEnabled) {
+        group.connector(new ScreenGroupConnector(group, null, isEnabled));
     }
 
-    @Override
-    public Class<? extends SettingConnector<?>> getConnectorClass() {
-        return (Class) ScreenConnector.class;
+    public static void group(Group group, Setting<?> setting) {
+        group.connector(new ScreenGroupConnector(group, setting, () -> true));
     }
+
+    public static void group(Group group, Setting<?> setting, Supplier<Boolean> isEnabled) {
+        group.connector(new ScreenGroupConnector(group, setting, isEnabled));
+    }
+
+    /* setting connectors */
+
+    public static void bool(Setting<Boolean> setting) {
+        setting.connector(new ScreenBooleanSettingConnector(setting, () -> true));
+    }
+
+    public static void bool(Setting<Boolean> setting, Supplier<Boolean> isEnabled) {
+        setting.connector(new ScreenBooleanSettingConnector(setting, isEnabled));
+    }
+
+    public static void intSlider(Setting<Integer> setting, int min, int max) {
+        setting.connector(new ScreenIntSliderSettingConnector(setting, min, max, () -> true));
+    }
+
+    public static void intSlider(Setting<Integer> setting, int min, int max, Supplier<Boolean> isEnabled) {
+        setting.connector(new ScreenIntSliderSettingConnector(setting, min, max, isEnabled));
+    }
+
+    public static void doubleSlider(Setting<Double> setting, int min, int max) {
+        setting.connector(new ScreenDoubleSliderSettingConnector(setting, min, max, () -> true));
+    }
+
+    public static void doubleSlider(Setting<Double> setting, int min, int max, Supplier<Boolean> isEnabled) {
+        setting.connector(new ScreenDoubleSliderSettingConnector(setting, min, max, isEnabled));
+    }
+
+
+
 }

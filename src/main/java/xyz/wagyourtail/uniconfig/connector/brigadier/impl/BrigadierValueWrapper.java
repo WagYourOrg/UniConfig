@@ -10,7 +10,6 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierConnector;
 import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierWrapper;
 import xyz.wagyourtail.uniconfig.PlatformMethods;
 import xyz.wagyourtail.uniconfig.util.Utils;

@@ -12,7 +12,7 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import xyz.wagyourtail.uniconfig.connector.brigadier.Brigadier;
+import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierConnector;
 import xyz.wagyourtail.uniconfig.connector.screen.impl.ScrollScreen;
 import xyz.wagyourtail.uniconfig.test.DeathSwapConfig;
 
@@ -28,7 +28,7 @@ public class UniConfigTestFabric implements ModInitializer, ClientModInitializer
 
         CommandRegistrationCallback.EVENT.register((d, b, s) -> {
             LiteralArgumentBuilder<CommandSourceStack> deathSwap = Commands.literal("deathswap");
-            Brigadier.register(config, deathSwap, r -> {}, w -> {});
+            BrigadierConnector.register(config, deathSwap, r -> {}, w -> {});
             d.register(deathSwap);
         });
 
@@ -39,7 +39,7 @@ public class UniConfigTestFabric implements ModInitializer, ClientModInitializer
         KeyBindingHelper.registerKeyBinding(DEATH_SWAP_KEY);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (DEATH_SWAP_KEY.consumeClick()) {
-                client.setScreen(new ScrollScreen(client.screen, config));
+                client.setScreen(new ScrollScreen(client.screen, config, true));
             }
         });
     }

@@ -1,0 +1,9 @@
+@ParametersAreNonnullByDefault
+@FieldsAreNonnullByDefault
+@MethodsReturnNonnullByDefault
+package xyz.wagyourtail.uniconfig.connector;
+
+import net.minecraft.FieldsAreNonnullByDefault;
+import net.minecraft.MethodsReturnNonnullByDefault;
+
+import javax.annotation.ParametersAreNonnullByDefault;

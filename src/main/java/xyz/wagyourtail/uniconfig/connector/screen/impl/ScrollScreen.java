@@ -6,34 +6,32 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import xyz.wagyourtail.uniconfig.Group;
-import xyz.wagyourtail.uniconfig.GroupConnector;
 import xyz.wagyourtail.uniconfig.Setting;
-import xyz.wagyourtail.uniconfig.connector.screen.ScreenConnector;
+import xyz.wagyourtail.uniconfig.connector.screen.ScreenSettingConnector;
 import xyz.wagyourtail.uniconfig.connector.screen.ScreenGroupConnector;
 
 import java.util.*;
 
 public class ScrollScreen extends AbstractElementContainerScreen {
-    private static final int SPACING = 50;
+    private static final int SPACING = 30;
     private ScrollWidget scrollWidget;
 
     @Nullable
     private Separator separator;
 
     private final Map<ScreenGroupConnector, AbstractWidget> groups = new LinkedHashMap<>();
-    private final Map<ScreenConnector<?>, AbstractWidget> attachedGroups = new HashMap<>();
+    private final Map<ScreenSettingConnector<?>, AbstractWidget> attachedGroups = new HashMap<>();
 
-    private final Map<ScreenConnector<?>, Pair<Label, AbstractWidget>> settings = new LinkedHashMap<>();
-
-    private int settingStartY = 0;
+    private final Map<ScreenSettingConnector<?>, Pair<Label, AbstractWidget>> settings = new LinkedHashMap<>();
 
 
-    public ScrollScreen(@Nullable Screen parent, Group group) {
-        super(parent, group);
+    public ScrollScreen(@Nullable Screen parent, Group group, boolean allowCancel) {
+        super(parent, group, allowCancel);
     }
 
     @Override
@@ -61,18 +59,25 @@ public class ScrollScreen extends AbstractElementContainerScreen {
         int widgetPosX = this.width / 2 + 25;
         // place buttons on page
         int i = 0;
+        boolean j = false;
         for (Map.Entry<ScreenGroupConnector, AbstractWidget> entry : groups.entrySet()) {
             if (entry.getKey().getAttachedSetting() != null) continue;
-            entry.getValue().setPosition(this.width / 2 - 100, (int) (20 + SPACING / 2 + i++ * SPACING - current));
+            if (j) {
+                entry.getValue().setPosition(this.width / 2 + 5, (int) (20 + SPACING / 2 + i++ * SPACING - current));
+                j = false;
+            } else {
+                entry.getValue().setPosition(this.width / 2 - 155, (int) (20 + SPACING / 2 + i * SPACING - current));
+                j = true;
+            }
             // set active based on location
         }
+        if (j) i++;
         // place separator
         if (separator != null) {
             separator.setPosition(this.width / 2 - separator.width / 2, (int) (20 + SPACING / 2 + i++ * SPACING - current));
         }
-        settingStartY = (int) (20 + SPACING / 2 + i * SPACING - current);
         // place settings on page
-        for (Map.Entry<ScreenConnector<?>, Pair<Label, AbstractWidget>> entry : settings.entrySet()) {
+        for (Map.Entry<ScreenSettingConnector<?>, Pair<Label, AbstractWidget>> entry : settings.entrySet()) {
             entry.getValue().first().setPosition(labelPosX - font.width(entry.getValue().first().text), (int) (20 + SPACING / 2 + i * SPACING - current) + entry.getValue().second().getHeight() / 2 - font.lineHeight / 2);
             entry.getValue().second().setPosition(widgetPosX + (150 - entry.getValue().second().getWidth()), (int) (20 + SPACING / 2 + i++ * SPACING - current));
             AbstractWidget group = attachedGroups.get(entry.getKey());
@@ -90,7 +95,7 @@ public class ScrollScreen extends AbstractElementContainerScreen {
             // active only if on screen and enabled
             entry.getValue().active = entry.getKey().isEnabled() && entry.getValue().getY() + entry.getValue().getHeight() > 20 && entry.getValue().getY() < this.height - 60;
         }
-        for (Map.Entry<ScreenConnector<?>, Pair<Label, AbstractWidget>> entry : settings.entrySet()) {
+        for (Map.Entry<ScreenSettingConnector<?>, Pair<Label, AbstractWidget>> entry : settings.entrySet()) {
             // active only if on screen and enabled
             entry.getValue().second().active = entry.getKey().enabled.get() && entry.getValue().second().getY() + entry.getValue().second().getHeight() > 20 && entry.getValue().second().getY() < this.height - 60;
         }
@@ -101,27 +106,27 @@ public class ScrollScreen extends AbstractElementContainerScreen {
         Setting<?> attachedSetting = group.getAttachedSetting();
         if (attachedSetting != null) {
             // construct as cog icon
-            Button b = Button.builder(Component.literal("⚙"), (button) -> this.openSubGroupScreen(group.getItem())).size(20, 20).build();
+            Button b = Button.builder(Component.literal("⚙"), (button) -> this.openSubGroupScreen(group.getItem())).size(20, 20).tooltip(group.getItem().description() == null ? null : Tooltip.create(group.getItem().description())).build();
             this.addRenderableWidget(b);
             groups.put(group, b);
-            attachedGroups.put(attachedSetting.getConnector(ScreenConnector.class), b);
+            attachedGroups.put(attachedSetting.getConnector(ScreenSettingConnector.class), b);
         } else {
             // construct as text
-            Button b = Button.builder(group.getItem().name(), (button) -> this.openSubGroupScreen(group.getItem())).size(200, 20).build();
+            Button b = Button.builder(group.getItem().name(), (button) -> this.openSubGroupScreen(group.getItem())).size(150, 20).tooltip(group.getItem().description() == null ? null : Tooltip.create(group.getItem().description())).build();
             this.addRenderableWidget(b);
             groups.put(group, b);
         }
     }
 
     @Override
-    public void addSetting(ScreenConnector<?> setting) {
+    public void addSetting(ScreenSettingConnector<?> setting) {
         Label l = new Label(this.font, setting.item.name(), 0, 0, 0xFFFFFF);
         this.addRenderableOnly(l);
         if (setting.isSubscreen()) {
             Button b = Button.builder(Component.translatable("uniconfig.screen.subscreen"), (button) -> {
                 assert this.minecraft != null;
                 this.minecraft.setScreen(setting.constructSubscreen(Optional.of(this)).orElseThrow(() -> new RuntimeException("failed to construct subscreen for " + setting.item.nameKey())));
-            }).size(20, 20).build();
+            }).size(20, 20).tooltip(setting.item.description() == null ? null : Tooltip.create(setting.item.description())).build();
             this.addRenderableWidget(b);
             settings.put(setting, Pair.of(l, b));
         } else {
@@ -134,7 +139,7 @@ public class ScrollScreen extends AbstractElementContainerScreen {
     @Override
     public void openSubGroupScreen(Group group) {
         assert this.minecraft != null;
-        this.minecraft.setScreen(new ScrollScreen(this, group));
+        this.minecraft.setScreen(new ScrollScreen(this, group, this.allowCancel()));
     }
 
     @Override
@@ -144,8 +149,10 @@ public class ScrollScreen extends AbstractElementContainerScreen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 5, 0xFFFFFF);
         this.scrollWidget.render(guiGraphics, mouseX, mouseY, partialTick);
+        bottomButtons.visitWidgets(e -> e.render(guiGraphics, mouseX, mouseY, partialTick));
     }
 
     private static class Separator implements Renderable {

@@ -1,8 +1,11 @@
-import xyz.wagyourtail.unimined.internal.minecraft.patch.forge.fg3.FG3MinecraftTransformer
-
 plugins {
     id("java")
     id("xyz.wagyourtail.unimined")// version "1.1.0"
+    id("org.gradle.gradle-profiler") version "0.0.2"
+}
+
+profiler {
+    asyncProfilerLocation.set(file("/opt/async-profiler"))
 }
 
 operator fun String.invoke(): String? {
@@ -17,8 +20,10 @@ base {
 }
 
 java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
@@ -27,8 +32,14 @@ repositories {
     mavenCentral()
 }
 
-val forge: SourceSet by sourceSets.creating
-val fabric: SourceSet by sourceSets.creating
+val forge: SourceSet by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().compileClasspath
+    runtimeClasspath += sourceSets.main.get().runtimeClasspath
+}
+val fabric: SourceSet by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().compileClasspath
+    runtimeClasspath += sourceSets.main.get().runtimeClasspath
+}
 
 val testForge: SourceSet by sourceSets.creating {
     compileClasspath += forge.output + sourceSets.test.get().compileClasspath
@@ -92,10 +103,41 @@ unimined.minecraft(testForge) {
 }
 
 dependencies {
-    implementation("com.electronwill.night-config:toml:3.6.7")
-    implementation("com.electronwill.night-config:yaml:3.6.7")
-    implementation("com.electronwill.night-config:json:3.6.7")
-    implementation("com.electronwill.night-config:hocon:3.6.7")
+
+    compileOnly("com.demonwav.mcdev:annotations:2.0.0")
+
+    "fabricInclude"("fabricModImplementation"(fabricApi.fabricModule("fabric-api-base", "fabric_api_version"()!!))!!)
+    "fabricInclude"(
+        "fabricModImplementation"(
+            fabricApi.fabricModule(
+                "fabric-resource-loader-v0",
+                "fabric_api_version"()!!
+            )
+        )!!
+    )
+    "fabricInclude"(
+        "fabricModImplementation"(
+            fabricApi.fabricModule(
+                "fabric-command-api-v2",
+                "fabric_api_version"()!!
+            )
+        )!!
+    )
+
+    "testFabricModImplementation"("net.fabricmc.fabric-api:fabric-api:${"fabric_api_version"()!!}")
+
+    "fabricInclude"(implementation("com.electronwill.night-config:core:3.6.7") {})
+    "fabricInclude"(implementation("com.electronwill.night-config:toml:3.6.7") {})
+    "fabricInclude"(implementation("com.electronwill.night-config:yaml:3.6.7") {})
+    "fabricInclude"(implementation("com.electronwill.night-config:json:3.6.7") {})
+    "fabricInclude"(implementation("com.electronwill.night-config:hocon:3.6.7") {})
+
+    implementation("org.jetbrains:annotations:24.0.1")
+    implementation("com.google.code.findbugs:jsr305:3.0.2")
+}
+
+tasks.withType<JavaCompile> {
+    options.release.set(17)
 }
 
 tasks.named<ProcessResources>("processFabricResources") {

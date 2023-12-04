@@ -1,3 +1,15 @@
 {
-    "uniconfig.brigadier.invalid": "%s is not a valid value for %s"
+    "uniconfig.brigadier.invalid": "%s is not a valid %s for %s",
+    "uniconfig.brigadier.set": "%s set to %s",
+    "uniconfig.brigadier.map.put": "%s set %s to %s",
+    "uniconfig.brigadier.map.remove": "%s removed %s",
+    "uniconfig.brigadier.map.clear": "%s cleared",
+    "uniconfig.brigadier.map.key": "key",
+    "uniconfig.brigadier.map.value": "value",
+    "uniconfig.brigadier.collection.clear": "%s cleared",
+    "uniconfig.brigadier.collection.add": "%s added %s",
+    "uniconfig.brigadier.collection.remove": "%s removed %s",
+    "uniconfig.brigadier.list.inserted": "%s inserted %s at %s",
+    "uniconfig.brigadier.list.invalid_index": "%s is not a valid index for length %s",
+    "uniconfig.screen.subscreen": "Edit Value"
 }

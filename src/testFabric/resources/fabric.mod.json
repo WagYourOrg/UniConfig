@@ -17,6 +17,9 @@
     "entrypoints": {
         "main": [
             "xyz.wagyourtail.uniconfig.test.fabric.UniConfigTestFabric"
+        ],
+        "client": [
+            "xyz.wagyourtail.uniconfig.test.fabric.UniConfigTestFabric"
         ]
     },
     "mixins": [

@@ -11,8 +11,8 @@ import java.util.function.Function;
 public class ComponentFactoryRegistry {
     private static final BiMap<ResourceLocation, Function<?, Component>> backing = Maps.synchronizedBiMap(HashBiMap.create());
 
-    public static final Function<Object, Component> DEFAULT = register("unimined:default", o -> Component.literal(o.toString()));
-    public static final Function<Integer, Component> TICK_TO_TIME = register("unimined:tick_to_time", i -> {
+    public static final Function<Object, Component> DEFAULT = register("uniconfig:default", o -> Component.literal(o.toString()));
+    public static final Function<Integer, Component> TICK_TO_TIME = register("uniconfig:tick_to_time", i -> {
         StringBuilder sb = new StringBuilder();
         int ticks = i % 20;
         int seconds = (i / 20) % 60;
@@ -45,7 +45,7 @@ public class ComponentFactoryRegistry {
     }
 
     public static <T> ResourceLocation getId(Function<T, Component> serializer) {
-        return backing.inverse().getOrDefault(serializer, new ResourceLocation("unimined:default"));
+        return backing.inverse().getOrDefault(serializer, new ResourceLocation("uniconfig:default"));
     }
 
     private ComponentFactoryRegistry() {

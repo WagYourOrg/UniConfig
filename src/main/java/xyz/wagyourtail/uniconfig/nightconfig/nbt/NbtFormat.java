@@ -64,7 +64,7 @@ public abstract class NbtFormat implements ConfigFormat<Config> {
 
     @Override
     public Config createConfig(Supplier<Map<String, Object>> mapCreator) {
-        return Config.of(mapCreator, this);
+        return Config.of(mapCreator, this).checked();
     }
 
     @Override

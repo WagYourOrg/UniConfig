@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.wagyourtail.uniconfig.connector.SettingConnector;
+import xyz.wagyourtail.uniconfig.registry.ConfigTypeFactoryRegistry;
 import xyz.wagyourtail.uniconfig.util.Utils;
 
 import java.util.*;
@@ -35,10 +36,7 @@ public class Setting<T> {
     public final Supplier<T> defaultValue;
 
     @ApiStatus.Internal
-    public final ConfigWriter<T> serializer;
-
-    @ApiStatus.Internal
-    public final ConfigReader<T> deserializer;
+    public final ConfigTypeFactoryRegistry.ConfigType<T> serializer;
 
     private T value;
 
@@ -46,13 +44,12 @@ public class Setting<T> {
     protected final Map<Class<? extends SettingConnector<?>>, SettingConnector<T>> connectors = new HashMap<>();
     private final Set<Consumer<T>> onSettingUpdate = new CopyOnWriteArraySet<>();
 
-    public Setting(String name, Group group, Function<T, Component> textValue, Supplier<T> defaultValue, ConfigWriter<T> serializer, ConfigReader<T> deserializer) {
+    public Setting(String name, Group group, Function<T, Component> textValue, Supplier<T> defaultValue, ConfigTypeFactoryRegistry.ConfigType<T> serializer) {
         this.name = name;
         this.group = group;
         this.textValue = textValue;
         this.defaultValue = defaultValue;
         this.serializer = serializer;
-        this.deserializer = deserializer;
         reRead();
     }
 
@@ -60,7 +57,7 @@ public class Setting<T> {
     public void reRead() {
         Config config = group.parentConfig().config;
         if (config.contains(key())) {
-            value = deserializer.read(config, key());
+            value = serializer.read(config, key());
         } else {
             value = defaultValue.get();
             if (!group.parentConfig().sparseConfig) {
@@ -141,7 +138,7 @@ public class Setting<T> {
 
     @ApiStatus.Internal
     public Setting<T> copyTo(Group group) {
-        Setting<T> setting = new Setting<>(name, group, textValue, defaultValue, serializer, deserializer);
+        Setting<T> setting = new Setting<>(name, group, textValue, defaultValue, serializer);
         setting.value = value;
         for (SettingConnector<T> value : connectors.values()) {
             setting.connector(value.copyTo(setting));
@@ -172,16 +169,6 @@ public class Setting<T> {
 
     public void connector(SettingConnector<T> connector) {
         connectors.put(connector.getConnectorClass(), connector);
-    }
-
-    @FunctionalInterface
-    public interface ConfigWriter<T> {
-        void write(Config config, List<String> key, T value);
-    }
-
-    @FunctionalInterface
-    public interface ConfigReader<T> {
-        T read(Config config, List<String> key);
     }
 
 }

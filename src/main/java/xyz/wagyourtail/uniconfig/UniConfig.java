@@ -38,7 +38,7 @@ public class UniConfig extends Group {
 
     @ApiStatus.Internal
     public final Config config;
-    private final IOSupplier<@Nullable OutputStream> saveStreamer;
+    private final IOSupplier<@Nullable OutputStream> outputStreamSupplier;
 
     public final Set<Class<? extends SettingConnector>> requiredConnectors = new HashSet<>();
 
@@ -53,7 +53,7 @@ public class UniConfig extends Group {
         super(name, null);
         this.config = Config.inMemory();
         this.sparseConfig = false;
-        this.saveStreamer = () -> null;
+        this.outputStreamSupplier = () -> null;
     }
 
 
@@ -61,15 +61,19 @@ public class UniConfig extends Group {
         super(name, null);
         this.config = tryRead(path);
         this.sparseConfig = sparseConfig;
-        this.saveStreamer = () -> Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        this.outputStreamSupplier = () -> Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
     @ApiStatus.Experimental
     protected UniConfig(@NotNull String name, @NotNull Config config, IOSupplier<@Nullable OutputStream> outputStream, boolean sparseConfig) {
         super(name, null);
         this.config = config;
-        this.saveStreamer = outputStream;
+        this.outputStreamSupplier = outputStream;
         this.sparseConfig = sparseConfig;
+    }
+
+    protected OutputStream getOutputStream() throws IOException {
+        return outputStreamSupplier.get();
     }
 
     private static Config tryRead(Path path) {
@@ -113,7 +117,7 @@ public class UniConfig extends Group {
         } else {
             writeAll();
         }
-        try (OutputStream stream = saveStreamer.get()) {
+        try (OutputStream stream = getOutputStream()) {
             if (stream != null) {
                 config.configFormat().createWriter().write(config.unmodifiable(), stream);
             }

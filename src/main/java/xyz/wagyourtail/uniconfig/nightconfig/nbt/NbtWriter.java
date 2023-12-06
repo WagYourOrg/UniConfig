@@ -9,7 +9,9 @@ import org.apache.commons.io.output.WriterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class NbtWriter implements ConfigWriter {
 
@@ -37,33 +39,44 @@ public abstract class NbtWriter implements ConfigWriter {
     public Tag toTag(Object value) {
         if (value instanceof UnmodifiableConfig) {
             toTag((UnmodifiableConfig) value);
-        } else if (value instanceof List<?>) {
-            List<?> l = (List<?>) value;
+        } else if (value instanceof Collection<?> l) {
+            if (l.isEmpty()) {
+                return new ListTag();
+            }
             // check if all types in list are the same and a number type
             if (l.stream().allMatch(o -> o instanceof Number)) {
                 if (l.stream().allMatch(o -> o instanceof Integer)) {
                     // int array
-                    return new IntArrayTag((List<Integer>) l);
+                    return new IntArrayTag((List) List.copyOf(l));
                 } else if (l.stream().allMatch(o -> o instanceof Long)) {
                     // long array
-                    return new net.minecraft.nbt.LongArrayTag((List<Long>) l);
-                } else if (l.stream().allMatch(o -> o instanceof Byte)) {
+                    return new LongArrayTag((List) List.copyOf(l));
+                } else if (l.stream().allMatch(o -> o instanceof Boolean)) {
                     // byte array
-                    return new net.minecraft.nbt.ByteArrayTag((List<Byte>) l);
+                    return new ByteArrayTag(l.stream().map(e -> (byte) ((boolean) e ? 1 : 0)).collect(Collectors.toList()));
                 }
             }
-            // list
-            ListTag lt = new ListTag();
-            for (Object o : l) {
-                lt.add(toTag(o));
+            // detect if homogenous list
+            Class<?> clazz = l.iterator().next().getClass();
+            if (l.stream().allMatch(o -> o.getClass().equals(clazz))) {
+                // homogenous list
+                ListTag lt = new ListTag();
+                for (Object o : l) {
+                    lt.add(toTag(o));
+                }
+                return lt;
+            } else {
+                // heterogeneous list
+                ListTag lt = new ListTag();
+                for (Object o : l) {
+                    CompoundTag tag = new CompoundTag();
+                    tag.put("", toTag(o));
+                    lt.add(tag);
+                }
+                return lt;
             }
-            return lt;
         } else if (value instanceof Number) {
-            if (value instanceof Byte) {
-                return ByteTag.valueOf((Byte) value);
-            } else if (value instanceof Short) {
-                return ShortTag.valueOf((Short) value);
-            } else if (value instanceof Integer) {
+            if (value instanceof Integer) {
                 return IntTag.valueOf((Integer) value);
             } else if (value instanceof Long) {
                 return LongTag.valueOf((Long) value);
@@ -73,7 +86,7 @@ public abstract class NbtWriter implements ConfigWriter {
                 return DoubleTag.valueOf((Double) value);
             }
         } else if (value instanceof Boolean) {
-            throw new IllegalArgumentException("Boolean not supported");
+            return ByteTag.valueOf((Boolean) value ? (byte) 1 : (byte) 0);
         } else if (value instanceof String) {
             return StringTag.valueOf((String) value);
         }

@@ -3,8 +3,6 @@ package xyz.wagyourtail.uniconfig;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.Config;
 import net.minecraft.locale.Language;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xyz.wagyourtail.uniconfig.connector.GroupConnector;
 import xyz.wagyourtail.uniconfig.connector.SettingConnector;
+import xyz.wagyourtail.uniconfig.registry.ComponentFactoryRegistry;
+import xyz.wagyourtail.uniconfig.registry.ConfigTypeFactoryRegistry;
 import xyz.wagyourtail.uniconfig.util.Utils;
 
 import java.util.*;
@@ -223,7 +223,7 @@ public class Group {
     ) {
         return setting(
                 name,
-                it -> Component.nullToEmpty(it.toString()),
+                (Function<T, Component>) ComponentFactoryRegistry.DEFAULT,
                 defaultValue,
                 preRegister
         );
@@ -238,8 +238,7 @@ public class Group {
                 name,
                 textValue,
                 defaultValue,
-                Function.identity(),
-                e -> e == null ? defaultValue : e
+                (ConfigTypeFactoryRegistry.ConfigType<T>) ConfigTypeFactoryRegistry.DEFAULT
         );
     }
 
@@ -253,8 +252,7 @@ public class Group {
                 name,
                 textValue,
                 defaultValue,
-                Function.identity(),
-                e -> e == null ? defaultValue : e,
+                (ConfigTypeFactoryRegistry.ConfigType<T>) ConfigTypeFactoryRegistry.DEFAULT,
                 preRegister
         );
     }
@@ -263,15 +261,13 @@ public class Group {
     public <T> Setting<T> setting(
             String name,
             T defaultValue,
-            Function<T, @NotNull String> serializer,
-            Function<@Nullable String, T> deserializer
+            ConfigTypeFactoryRegistry.ConfigType<T> serializer
     ) {
         return setting(
                 name,
-                it -> Component.nullToEmpty(serializer.apply(it)),
+                (Function<T, Component>) ComponentFactoryRegistry.DEFAULT,
                 defaultValue,
-                serializer,
-                deserializer
+                serializer
         );
     }
 
@@ -279,16 +275,14 @@ public class Group {
     public <T> Setting<T> setting(
             String name,
             T defaultValue,
-            Function<T, @NotNull String> serializer,
-            Function<@NotNull String, T> deserializer,
+            ConfigTypeFactoryRegistry.ConfigType<T> serializer,
             Consumer<Setting<T>> preRegister
     ) {
         return setting(
                 name,
-                it -> Component.nullToEmpty(serializer.apply(it)),
+                (Function<T, Component>) ComponentFactoryRegistry.DEFAULT,
                 defaultValue,
                 serializer,
-                deserializer,
                 preRegister
         );
     }
@@ -297,21 +291,19 @@ public class Group {
             String name,
             Function<T, Component> textValue,
             T defaultValue,
-            Function<T, @NotNull S> serializer,
-            Function<@Nullable S, T> deserializer
+            ConfigTypeFactoryRegistry.ConfigType<T> serializer
     ) {
-        return setting(new Setting<>(name, this, textValue, () -> defaultValue, (a, b, c) -> a.set(b, serializer.apply(c)), (a, b) -> deserializer.apply(a.get(b))));
+        return setting(new Setting<>(name, this, textValue, () -> defaultValue, serializer));
     }
 
     public <T, S> Setting<T> setting(
             String name,
             Function<T, Component> textValue,
             T defaultValue,
-            Function<T, @Nullable S> serializer,
-            Function<@Nullable S, T> deserializer,
+            ConfigTypeFactoryRegistry.ConfigType<T> serializer,
             Consumer<Setting<T>> preRegister
     ) {
-        return setting(new Setting<>(name, this, textValue, () -> defaultValue, (a, b, c) -> a.set(b, serializer.apply(c)), (a, b) -> deserializer.apply(a.get(b))), preRegister);
+        return setting(new Setting<>(name, this, textValue, () -> defaultValue, serializer), preRegister);
     }
 
     public <T extends Enum<T>> Setting<T> enumSetting(
@@ -322,8 +314,10 @@ public class Group {
         return setting(
                 name,
                 defaultValue,
-                Enum::toString,
-                (e) -> e == null ? defaultValue : Enum.valueOf(enumClass, e)
+                ConfigTypeFactoryRegistry.ConfigType.of(
+                    (config, key, value) -> config.set(key, value.name()),
+                    (config, key) -> Enum.valueOf(enumClass, config.get(key))
+                )
         );
     }
 
@@ -460,22 +454,24 @@ public class Group {
                 this,
                 textValue,
                 () -> copyMutable.apply(defaultValue),
-                (a, b, c) -> {
-                    b.add("");
-                    for (Map.Entry<String, V> entry : c.entrySet()) {
-                        b.remove(b.size() - 1);
-                        b.add(entry.getKey());
-                        a.set(b, valueSerializer.apply(entry.getValue()));
+                ConfigTypeFactoryRegistry.ConfigType.of(
+                    (a, b, c) -> {
+                        b.add("");
+                        for (Map.Entry<String, V> entry : c.entrySet()) {
+                            b.remove(b.size() - 1);
+                            b.add(entry.getKey());
+                            a.set(b, valueSerializer.apply(entry.getValue()));
+                        }
+                    },
+                    (a, b) -> {
+                        Map<String, V> map = new HashMap<>();
+                        Config config = a.get(b);
+                        for (Config.Entry entry : config.entrySet()) {
+                            map.put(entry.getKey(), valueDeserializer.apply(entry.getValue()));
+                        }
+                        return map;
                     }
-                },
-                (a, b) -> {
-                    Map<String, V> map = new HashMap<>();
-                    Config config = a.get(b);
-                    for (Config.Entry entry : config.entrySet()) {
-                        map.put(entry.getKey(), valueDeserializer.apply(entry.getValue()));
-                    }
-                    return map;
-                }
+                )
         ));
     }
 
@@ -493,22 +489,24 @@ public class Group {
                 this,
                 textValue,
                 () -> copyMutable.apply(defaultValue),
-                (a, b, c) -> {
-                    b.add("");
-                    for (Map.Entry<String, V> entry : c.entrySet()) {
-                        b.remove(b.size() - 1);
-                        b.add(entry.getKey());
-                        a.set(b, valueSerializer.apply(entry.getValue()));
+                ConfigTypeFactoryRegistry.ConfigType.of(
+                    (a, b, c) -> {
+                        b.add("");
+                        for (Map.Entry<String, V> entry : c.entrySet()) {
+                            b.remove(b.size() - 1);
+                            b.add(entry.getKey());
+                            a.set(b, valueSerializer.apply(entry.getValue()));
+                        }
+                    },
+                    (a, b) -> {
+                        Map<String, V> map = new HashMap<>();
+                        Config config = a.get(b);
+                        for (Config.Entry entry : config.entrySet()) {
+                            map.put(entry.getKey(), valueDeserializer.apply(entry.getValue()));
+                        }
+                        return map;
                     }
-                },
-                (a, b) -> {
-                    Map<String, V> map = new HashMap<>();
-                    Config config = a.get(b);
-                    for (Config.Entry entry : config.entrySet()) {
-                        map.put(entry.getKey(), valueDeserializer.apply(entry.getValue()));
-                    }
-                    return map;
-                }
+                )
         ), preRegister);
     }
 
@@ -649,21 +647,23 @@ public class Group {
                 this,
                 textValue,
                 () -> copyMutable.apply(defaultValue),
-                (a, b, c) -> {
-                    List<S> list = new ArrayList<>();
-                    for (V v : c) {
-                        list.add(valueSerializer.apply(v));
-                    }
-                    a.set(b, list);
-                },
-                (a, b) -> {
-                    List<S> list = a.get(b);
-                    T collection = copyMutable.apply(Collections.emptyList());
-                    for (S s : list) {
-                        collection.add(valueDeserializer.apply(s));
-                    }
-                    return collection;
-                })
+                ConfigTypeFactoryRegistry.ConfigType.of(
+                    (a, b, c) -> {
+                        List<S> list = new ArrayList<>();
+                        for (V v : c) {
+                            list.add(valueSerializer.apply(v));
+                        }
+                        a.set(b, list);
+                    },
+                    (a, b) -> {
+                        List<S> list = a.get(b);
+                        T collection = copyMutable.apply(Collections.emptyList());
+                        for (S s : list) {
+                            collection.add(valueDeserializer.apply(s));
+                        }
+                        return collection;
+                    })
+                )
         );
     }
 
@@ -681,21 +681,24 @@ public class Group {
                 this,
                 textValue,
                 () -> copyMutable.apply(defaultValue),
-                (a, b, c) -> {
-                    List<S> list = new ArrayList<>();
-                    for (V v : c) {
-                        list.add(valueSerializer.apply(v));
+                ConfigTypeFactoryRegistry.ConfigType.of(
+                    (a, b, c) -> {
+                        List<S> list = new ArrayList<>();
+                        for (V v : c) {
+                            list.add(valueSerializer.apply(v));
+                        }
+                        a.set(b, list);
+                    },
+                    (a, b) -> {
+                        List<S> list = a.get(b);
+                        T collection = copyMutable.apply(Collections.emptyList());
+                        for (S s : list) {
+                            collection.add(valueDeserializer.apply(s));
+                        }
+                        return collection;
                     }
-                    a.set(b, list);
-                },
-                (a, b) -> {
-                    List<S> list = a.get(b);
-                    T collection = copyMutable.apply(Collections.emptyList());
-                    for (S s : list) {
-                        collection.add(valueDeserializer.apply(s));
-                    }
-                    return collection;
-                }), preRegister);
+                )
+        ), preRegister);
     }
 
 }

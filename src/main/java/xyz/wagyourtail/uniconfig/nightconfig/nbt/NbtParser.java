@@ -38,13 +38,15 @@ public abstract class NbtParser implements ConfigParser<Config> {
         return config;
     }
 
-    public void parse(List<String> keys, CompoundTag tag, Config config, ParsingMode parsingMode) {
+    protected void parse(List<String> keys, CompoundTag tag, Config config, ParsingMode parsingMode) {
         for (String key : tag.getAllKeys()) {
             Tag entry = tag.get(key);
             assert entry != null;
             keys.add(key);
             if (entry instanceof CompoundTag) {
-                parse(keys, (CompoundTag) entry, config, parsingMode);
+                Config child = config.createSubConfig();
+                parse(keys, (CompoundTag) entry, child, parsingMode);
+                parsingMode.put(config, keys, child);
             } else {
                 parsingMode.put(config, keys, fromTag(entry));
             }
@@ -55,11 +57,10 @@ public abstract class NbtParser implements ConfigParser<Config> {
     public Object fromTag(Tag tag) {
         switch (tag.getId()) {
             case Tag.TAG_BYTE:
-                return ((ByteTag) tag).getAsByte();
+                return ((ByteTag) tag).getAsByte() != 0;
             case Tag.TAG_SHORT:
-                return ((ShortTag) tag).getAsShort();
             case Tag.TAG_INT:
-                return ((IntTag) tag).getAsInt();
+                return ((NumericTag) tag).getAsInt();
             case Tag.TAG_LONG:
                 return ((LongTag) tag).getAsLong();
             case Tag.TAG_FLOAT:
@@ -67,9 +68,9 @@ public abstract class NbtParser implements ConfigParser<Config> {
             case Tag.TAG_DOUBLE:
                 return ((DoubleTag) tag).getAsDouble();
             case Tag.TAG_BYTE_ARRAY: {
-                List<Byte> l = new ArrayList<>();
+                List<Boolean> l = new ArrayList<>();
                 for (byte b : ((ByteArrayTag) tag).getAsByteArray()) {
-                    l.add(b);
+                    l.add(b != 0);
                 }
                 return l;
             }
@@ -77,6 +78,16 @@ public abstract class NbtParser implements ConfigParser<Config> {
                 return tag.getAsString();
             case Tag.TAG_LIST: {
                 ListTag list = (ListTag) tag;
+                if (list.isEmpty()) {
+                    return new ArrayList<>();
+                }
+                if (list.getElementType() == Tag.TAG_COMPOUND) {
+                    List<Object> l = new ArrayList<>();
+                    ((ListTag) tag).stream().allMatch(e -> ((CompoundTag) e).getAllKeys().size() == 1 && ((CompoundTag) e).contains(""));
+                    for (Tag t : list) {
+                        l.add(fromTag(((CompoundTag) t).get("")));
+                    }
+                }
                 List<Object> l = new ArrayList<>();
                 for (Tag t : list) {
                     l.add(fromTag(t));

@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierWrapper;
 import xyz.wagyourtail.uniconfig.PlatformMethods;
-import xyz.wagyourtail.uniconfig.util.Utils;
+import xyz.wagyourtail.uniconfig.util.TranslationUtils;
 
 import java.util.Collection;
 import java.util.function.BiConsumer;
@@ -64,7 +64,7 @@ public class BrigadierCollectionWrapper<T, B, V extends Collection<T>> implement
             if (entry != null) {
                 collection.add(entry);
                 writer.accept(collection, context);
-                PlatformMethods.INSTANCE.sendFeedback(context.getSource(), Utils.translatable("uniconfig.brigadier.collection.add", broadcastName, entryWrapper.serialize(entry)), true);
+                PlatformMethods.INSTANCE.sendFeedback(context.getSource(), TranslationUtils.translatable("uniconfig.brigadier.collection.add", broadcastName, entryWrapper.serialize(entry)), true);
             }
         });
         parent.then(addArg);
@@ -78,7 +78,7 @@ public class BrigadierCollectionWrapper<T, B, V extends Collection<T>> implement
             if (entry != null) {
                 collection.remove(entry);
                 writer.accept(collection, context);
-                PlatformMethods.INSTANCE.sendFeedback(context.getSource(), Utils.translatable("uniconfig.brigadier.collection.remove", broadcastName, entryWrapper.serialize(entry)), true);
+                PlatformMethods.INSTANCE.sendFeedback(context.getSource(), TranslationUtils.translatable("uniconfig.brigadier.collection.remove", broadcastName, entryWrapper.serialize(entry)), true);
             }
         });
         parent.then(removeArg);
@@ -88,7 +88,7 @@ public class BrigadierCollectionWrapper<T, B, V extends Collection<T>> implement
             V collection = reader.apply(context);
             collection.clear();
             writer.accept(collection, context);
-            PlatformMethods.INSTANCE.sendFeedback(context.getSource(), Utils.translatable("uniconfig.brigadier.collection.clear", broadcastName), true);
+            PlatformMethods.INSTANCE.sendFeedback(context.getSource(), TranslationUtils.translatable("uniconfig.brigadier.collection.clear", broadcastName), true);
             return Command.SINGLE_SUCCESS;
         });
         writeArgModifier.accept(clearArg);

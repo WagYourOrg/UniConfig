@@ -1,5 +1,6 @@
 package xyz.wagyourtail.uniconfig.connector.screen.connector;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.Tooltip;
@@ -25,7 +26,18 @@ public class ScreenBooleanSettingConnector extends ScreenSettingConnector<Boolea
 
     @Override
     public Optional<AbstractWidget> constructElement() {
-        return Optional.of(new Checkbox());
+        Checkbox box = Checkbox.builder(Component.empty(), Minecraft.getInstance().font)
+            .pos(0, 0)
+            .onValueChange((a, b) -> {
+                item.setValue(b);
+            })
+            .tooltip(item.description() == null ? null : Tooltip.create(item.description()))
+            .build();
+
+        box.setWidth(20);
+        box.setHeight(20);
+
+        return Optional.of(box);
     }
 
     @Override
@@ -33,16 +45,4 @@ public class ScreenBooleanSettingConnector extends ScreenSettingConnector<Boolea
         return new ScreenBooleanSettingConnector(item, enabled);
     }
 
-    private class Checkbox extends net.minecraft.client.gui.components.Checkbox {
-        public Checkbox() {
-            super(0, 0, 20, 20, Component.empty(), item.getValue());
-            setTooltip(item.description() == null ? null : Tooltip.create(item.description()));
-        }
-
-        @Override
-        public void onPress() {
-            super.onPress();
-            item.setValue(this.selected());
-        }
-    }
 }

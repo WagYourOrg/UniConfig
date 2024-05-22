@@ -6,13 +6,12 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xyz.wagyourtail.uniconfig.connector.GroupConnector;
 import xyz.wagyourtail.uniconfig.connector.SettingConnector;
 import xyz.wagyourtail.uniconfig.registry.ComponentFactoryRegistry;
 import xyz.wagyourtail.uniconfig.registry.ConfigTypeFactoryRegistry;
-import xyz.wagyourtail.uniconfig.util.Utils;
+import xyz.wagyourtail.uniconfig.util.TranslationUtils;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -101,14 +100,14 @@ public class Group {
     }
 
     public MutableComponent name() {
-        return Utils.translatable(String.join(".", translateKeyList()));
+        return TranslationUtils.translatable(String.join(".", translateKeyList()));
     }
 
     @Nullable
     public MutableComponent description() {
         String comment = String.join(".", translateKeyList()) + ".comment";
         if (Language.getInstance().has(comment)) {
-            return Utils.translatable(comment);
+            return TranslationUtils.translatable(comment);
         }
         return null;
     }
@@ -188,6 +187,10 @@ public class Group {
                 group.connector(connector.copyTo(group, attached));
             }
         }
+    }
+
+    public void group(Group group) {
+        children.add(group);
     }
 
     /* HELPERS BELOW THIS POINT */
@@ -287,7 +290,7 @@ public class Group {
         );
     }
 
-    public <T, S> Setting<T> setting(
+    public <T> Setting<T> setting(
             String name,
             Function<T, Component> textValue,
             T defaultValue,
@@ -296,7 +299,7 @@ public class Group {
         return setting(new Setting<>(name, this, textValue, () -> defaultValue, serializer));
     }
 
-    public <T, S> Setting<T> setting(
+    public <T> Setting<T> setting(
             String name,
             Function<T, Component> textValue,
             T defaultValue,

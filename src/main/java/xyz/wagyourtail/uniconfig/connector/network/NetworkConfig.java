@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import xyz.wagyourtail.uniconfig.Group;
 import xyz.wagyourtail.uniconfig.Setting;
@@ -24,6 +25,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@ApiStatus.Experimental
 public class NetworkConfig extends UniConfig {
 
     public NetworkConfig(@NotNull String name, Consumer<FriendlyByteBuf> sendToServer) {
@@ -65,8 +67,8 @@ public class NetworkConfig extends UniConfig {
         Config item = NbtFormat.COMPRESSED.createConfig();
         setting.serializer.write(item, List.of("value"), setting.getValue());
         setting.serializer.write(item, List.of("default"), setting.defaultValue.get());
-        setting.serializer.write(item, List.of("textifier"), ComponentFactoryRegistry.getId(setting.textValue).toString());
-        setting.serializer.write(item, List.of("type"), ConfigTypeFactoryRegistry.getId(setting.serializer).toString());
+        setting.serializer.write(item, List.of("textifier"), ComponentFactoryRegistry.getId(setting.textValue).orElseThrow().toString());
+        setting.serializer.write(item, List.of("type"), ConfigTypeFactoryRegistry.getId(setting.serializer).orElseThrow().toString());
         // TODO: connectors
         return writer.toTag(item);
     }
@@ -94,8 +96,8 @@ public class NetworkConfig extends UniConfig {
                 CompoundTag settings = tag.getCompound(key);
                 for (String settingKey : settings.getAllKeys()) {
                     CompoundTag setting = settings.getCompound(settingKey);
-                    ConfigTypeFactoryRegistry.ConfigType<?> type = ConfigTypeFactoryRegistry.get(new ResourceLocation(setting.getString("type")));
-                    Function<?, Component> textifier = ComponentFactoryRegistry.get(new ResourceLocation(setting.getString("textifier")));
+                    ConfigTypeFactoryRegistry.ConfigType<?> type = ConfigTypeFactoryRegistry.get(new ResourceLocation(setting.getString("type"))).orElseThrow();
+                    Function<?, Component> textifier = ComponentFactoryRegistry.get(new ResourceLocation(setting.getString("textifier"))).orElseThrow();
                     Setting settingObj = new Setting(
                         settingKey,
                         target,

@@ -3,7 +3,6 @@ package xyz.wagyourtail.uniconfig;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.Config;
 import net.minecraft.locale.Language;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.wagyourtail.uniconfig.connector.SettingConnector;
 import xyz.wagyourtail.uniconfig.registry.ConfigTypeFactoryRegistry;
-import xyz.wagyourtail.uniconfig.util.Utils;
+import xyz.wagyourtail.uniconfig.util.TranslationUtils;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -147,14 +146,14 @@ public class Setting<T> {
     }
 
     public MutableComponent name() {
-        return Utils.translatable(String.join(".", translateKeyList()));
+        return TranslationUtils.translatable(String.join(".", translateKeyList()));
     }
 
     @Nullable
     public MutableComponent description() {
         String comment = String.join(".", translateKeyList()) + ".comment";
         if (Language.getInstance().has(comment)) {
-            return Utils.translatable(comment);
+            return TranslationUtils.translatable(comment);
         }
         return null;
     }

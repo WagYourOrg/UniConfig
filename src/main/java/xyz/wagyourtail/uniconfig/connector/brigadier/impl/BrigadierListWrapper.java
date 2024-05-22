@@ -9,7 +9,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierWrapper;
 import xyz.wagyourtail.uniconfig.PlatformMethods;
-import xyz.wagyourtail.uniconfig.util.Utils;
+import xyz.wagyourtail.uniconfig.util.TranslationUtils;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -37,7 +37,7 @@ public class BrigadierListWrapper<T, B> extends BrigadierCollectionWrapper<T, B,
             if (entry != null) {
                 collection.add(index, entry);
                 writer.accept(collection, context);
-                PlatformMethods.INSTANCE.sendFeedback(context.getSource(), Utils.translatable("uniconfig.brigadier.list.inserted", broadcastName, entryWrapper.serialize(entry), index), true);
+                PlatformMethods.INSTANCE.sendFeedback(context.getSource(), TranslationUtils.translatable("uniconfig.brigadier.list.inserted", broadcastName, entryWrapper.serialize(entry), index), true);
             }
         });
         parent.then(insertArg.then(indexArg));
@@ -55,7 +55,7 @@ public class BrigadierListWrapper<T, B> extends BrigadierCollectionWrapper<T, B,
             if (index >= 0 && index < collection.size()) {
                 return collection.get(index);
             } else {
-                PlatformMethods.INSTANCE.sendFailure(c.getSource(), Utils.translatable("uniconfig.brigadier.list.invalid_index", index, collection.size()));
+                PlatformMethods.INSTANCE.sendFailure(c.getSource(), TranslationUtils.translatable("uniconfig.brigadier.list.invalid_index", index, collection.size()));
                 return null;
             }
         });

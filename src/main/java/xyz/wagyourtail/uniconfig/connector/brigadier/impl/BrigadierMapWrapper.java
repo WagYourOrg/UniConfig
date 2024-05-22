@@ -10,7 +10,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierWrapper;
 import xyz.wagyourtail.uniconfig.PlatformMethods;
-import xyz.wagyourtail.uniconfig.util.Utils;
+import xyz.wagyourtail.uniconfig.util.TranslationUtils;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -67,7 +67,7 @@ public class BrigadierMapWrapper<K, V, BK, BV> implements BrigadierWrapper<Map<K
             if (key != null) {
                 map.put(key, value);
                 writer.accept(map, context);
-                PlatformMethods.INSTANCE.sendFeedback(context.getSource(), Utils.translatable("uniconfig.brigadier.map.put", broadcastName, keyWrapper.serialize(key), valueWrapper.serialize(value)), true);
+                PlatformMethods.INSTANCE.sendFeedback(context.getSource(), TranslationUtils.translatable("uniconfig.brigadier.map.put", broadcastName, keyWrapper.serialize(key), valueWrapper.serialize(value)), true);
             }
         });
         if (keyWrapper instanceof BrigadierValueWrapper) {
@@ -84,7 +84,7 @@ public class BrigadierMapWrapper<K, V, BK, BV> implements BrigadierWrapper<Map<K
             Map<K, V> map = reader.apply(context);
             map.remove(key);
             writer.accept(map, context);
-            PlatformMethods.INSTANCE.sendFeedback(context.getSource(), Utils.translatable("uniconfig.brigadier.map.remove", broadcastName, keyWrapper.serialize(key)), true);
+            PlatformMethods.INSTANCE.sendFeedback(context.getSource(), TranslationUtils.translatable("uniconfig.brigadier.map.remove", broadcastName, keyWrapper.serialize(key)), true);
         });
         parent.then(removeArg);
         // clear
@@ -93,7 +93,7 @@ public class BrigadierMapWrapper<K, V, BK, BV> implements BrigadierWrapper<Map<K
             Map<K, V> map = reader.apply(context);
             map.clear();
             writer.accept(map, context);
-            PlatformMethods.INSTANCE.sendFeedback(context.getSource(), Utils.translatable("uniconfig.brigadier.map.clear", broadcastName), true);
+            PlatformMethods.INSTANCE.sendFeedback(context.getSource(), TranslationUtils.translatable("uniconfig.brigadier.map.clear", broadcastName), true);
             return Command.SINGLE_SUCCESS;
         });
         writeArgModifier.accept(clearArg);

@@ -5,6 +5,7 @@ import com.electronwill.nightconfig.core.ConfigFormat;
 import com.electronwill.nightconfig.core.io.ConfigParser;
 import com.electronwill.nightconfig.core.io.ConfigWriter;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 
 import java.io.*;
@@ -28,7 +29,7 @@ public abstract class NbtFormat implements ConfigFormat<Config> {
             return new NbtParser(this) {
                 @Override
                 CompoundTag read(InputStream reader) throws IOException {
-                    return NbtIo.readCompressed(reader);
+                    return NbtIo.readCompressed(reader, NbtAccounter.unlimitedHeap());
                 }
             };
         }

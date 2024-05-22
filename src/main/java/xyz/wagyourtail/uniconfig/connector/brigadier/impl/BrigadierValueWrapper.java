@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierWrapper;
 import xyz.wagyourtail.uniconfig.PlatformMethods;
-import xyz.wagyourtail.uniconfig.util.Utils;
+import xyz.wagyourtail.uniconfig.util.TranslationUtils;
 
 import java.util.function.*;
 
@@ -56,7 +56,7 @@ public class BrigadierValueWrapper<T, B> implements BrigadierWrapper<T, B> {
     public T parse(Component broadcastName, String keyVal, CommandContext<SharedSuggestionProvider> context) {
         B value = (B) context.getArgument(writeKey(), Object.class);
         if (filter != null && !filter.test(context, value)) {
-            PlatformMethods.INSTANCE.sendFailure(context.getSource(), Utils.translatable("uniconfig.brigadier.invalid", value.toString(), Utils.translatable("uniconfig.brigadier.map." + keyVal), broadcastName));
+            PlatformMethods.INSTANCE.sendFailure(context.getSource(), TranslationUtils.translatable("uniconfig.brigadier.invalid", value.toString(), TranslationUtils.translatable("uniconfig.brigadier.map." + keyVal), broadcastName));
             return null;
         } else {
             return deserializer.apply(value);
@@ -98,7 +98,7 @@ public class BrigadierValueWrapper<T, B> implements BrigadierWrapper<T, B> {
         readBuilder(broadcastName, readArg, a -> reader.get());
         writeBuilder(broadcastName, readArg, writeArgModifier, c -> reader.get(), (a, b) -> {
             writer.accept(a);
-            PlatformMethods.INSTANCE.sendFeedback(b.getSource(), Utils.translatable("uniconfig.brigadier.set", broadcastName, serializer.apply(a)), true);
+            PlatformMethods.INSTANCE.sendFeedback(b.getSource(), TranslationUtils.translatable("uniconfig.brigadier.set", broadcastName, serializer.apply(a)), true);
         });
     }
 }

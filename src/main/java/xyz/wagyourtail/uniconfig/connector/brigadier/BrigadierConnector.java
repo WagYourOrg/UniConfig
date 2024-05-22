@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +42,11 @@ public final class BrigadierConnector {
         setting.connector(new BrigadierSettingConnector<>(setting, wrapper));
     }
 
-    public static <T> BrigadierWrapper<T, T> value(ArgumentType<T> type) {
+    public static <T> BrigadierWrapper<T, ?> value(ArgumentType<T> type) {
         return value(type, Function.identity(), t -> Component.literal(t.toString()));
     }
 
-    public static <T> BrigadierWrapper<T, T> value(ArgumentType<T> type, Function<T, Component> serializer) {
+    public static <T> BrigadierWrapper<T, ?> value(ArgumentType<T> type, Function<T, Component> serializer) {
         return value(type, Function.identity(), serializer);
     }
 

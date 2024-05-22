@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.wagyourtail.uniconfig.connector.SettingConnector;
 import xyz.wagyourtail.uniconfig.nightconfig.nbt.NbtFormat;
-import xyz.wagyourtail.uniconfig.util.Utils;
+import xyz.wagyourtail.uniconfig.util.TranslationUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +40,7 @@ public class UniConfig extends Group {
     public final Config config;
     private final IOSupplier<@Nullable OutputStream> outputStreamSupplier;
 
-    public final Set<Class<? extends SettingConnector>> requiredConnectors = new HashSet<>();
+    final Set<Class<? extends SettingConnector>> requiredConnectors = new HashSet<>();
 
     public final boolean sparseConfig;
 
@@ -72,6 +72,10 @@ public class UniConfig extends Group {
         this.sparseConfig = sparseConfig;
     }
 
+    public void requireConnector(Class<? extends SettingConnector> connector) {
+        requiredConnectors.add(connector);
+    }
+
     protected OutputStream getOutputStream() throws IOException {
         return outputStreamSupplier.get();
     }
@@ -95,7 +99,7 @@ public class UniConfig extends Group {
     }
 
     public void reRead(Path path) {
-        reRead(tryRead(path).unmodifiable());
+        reRead(tryRead(path));
     }
 
     @ApiStatus.Experimental
@@ -118,16 +122,26 @@ public class UniConfig extends Group {
             writeAll();
         }
         try (OutputStream stream = getOutputStream()) {
-            if (stream != null) {
-                config.configFormat().createWriter().write(config.unmodifiable(), stream);
-            }
+            saveTo(stream);
         } catch (IOException e) {
             LOGGER.error("Failed to save config", e);
         }
     }
 
+    public void saveTo(Path path) {
+        try (OutputStream stream = Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            saveTo(stream);
+        } catch (IOException e) {
+            LOGGER.error("Failed to save config", e);
+        }
+    }
+
+    public void saveTo(OutputStream stream) throws IOException {
+        config.configFormat().createWriter().write(config, stream);
+    }
+
     public Component toText() {
-        MutableComponent text = Utils.translatable(name).append(": ");
+        MutableComponent text = TranslationUtils.translatable(name).append(": ");
         Map<String, Setting<?>> sorted = flatItems();
         for (Setting<?> item : sorted.values()) {
             text = text.append("\n").append(item.toText());

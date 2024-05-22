@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 public class ComponentFactoryRegistry {
@@ -40,12 +41,12 @@ public class ComponentFactoryRegistry {
         return serializer;
     }
 
-    public static <T> Function<T, Component> get(ResourceLocation id) {
-        return (Function<T, Component>) backing.getOrDefault(id, DEFAULT);
+    public static <T> Optional<Function<T, Component>> get(ResourceLocation id) {
+        return Optional.ofNullable((Function<T, Component>) backing.get(id));
     }
 
-    public static <T> ResourceLocation getId(Function<T, Component> serializer) {
-        return backing.inverse().getOrDefault(serializer, new ResourceLocation("uniconfig:default"));
+    public static <T> Optional<ResourceLocation> getId(Function<T, Component> serializer) {
+        return Optional.ofNullable(backing.inverse().get(serializer));
     }
 
     private ComponentFactoryRegistry() {

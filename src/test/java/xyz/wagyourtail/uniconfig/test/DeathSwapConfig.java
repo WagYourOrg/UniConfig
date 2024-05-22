@@ -15,64 +15,59 @@ import xyz.wagyourtail.uniconfig.UniConfig;
 import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierConnector;
 import xyz.wagyourtail.uniconfig.connector.brigadier.BrigadierSettingConnector;
 import xyz.wagyourtail.uniconfig.connector.screen.ScreenConnector;
+import xyz.wagyourtail.uniconfig.registry.ComponentFactoryRegistry;
+import xyz.wagyourtail.uniconfig.registry.ConfigTypeFactoryRegistry;
 
 import java.util.*;
 
 public class DeathSwapConfig extends UniConfig {
+    public static ConfigTypeFactoryRegistry.ConfigType<DeathSwapGameMode> DEATH_SWAP_GAME_MODE = ConfigTypeFactoryRegistry.register("deathswap:gamemode", ConfigTypeFactoryRegistry.ConfigType.ofEnum(DeathSwapGameMode.class));
 
     public DeathSwapConfig() {
         super("mod.deathswap.config", PlatformTestMethods.INSTANCE.getConfigPath().resolve("deathswap.toml"), false);
         this.requiredConnectors.add(BrigadierSettingConnector.class);
     }
 
-    private static Component formatTime(int ticks) {
-        if (ticks % 20 == 0) {
-            return Component.literal(ticks + "t (" + ticks / 20 + "s)");
-        } else {
-            return Component.literal(ticks + "t (" + ticks / 20f + "s)");
-        }
-    }
-
     public final Group swapTime = group("swap_time");
 
-    public final Setting<Integer> swapTimeMin = swapTime.setting("min", DeathSwapConfig::formatTime, 20 * 60, s -> {
-        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), DeathSwapConfig::formatTime));
+    public final Setting<Integer> swapTimeMin = swapTime.setting("min", ComponentFactoryRegistry.TICK_TO_TIME, 20 * 60, s -> {
+        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), ComponentFactoryRegistry.TICK_TO_TIME));
         ScreenConnector.intSlider(s, 0, 20 * 60);
     });
 
-    public final Setting<Integer> swapTimeMax = swapTime.setting("max", DeathSwapConfig::formatTime, 20 * 180, s -> {
-        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), DeathSwapConfig::formatTime));
+    public final Setting<Integer> swapTimeMax = swapTime.setting("max", ComponentFactoryRegistry.TICK_TO_TIME, 20 * 180, s -> {
+        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), ComponentFactoryRegistry.TICK_TO_TIME));
         ScreenConnector.intSlider(s, 0, 20 * 180);
     });
 
-    public final Setting<Integer> warnTime = swapTime.setting("warn_time", DeathSwapConfig::formatTime, 0, s -> {
-        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), DeathSwapConfig::formatTime));
+    public final Setting<Integer> warnTime = swapTime.setting("warn_time", ComponentFactoryRegistry.TICK_TO_TIME, 0, s -> {
+        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), ComponentFactoryRegistry.TICK_TO_TIME));
         ScreenConnector.intSlider(s, 0, 20 * 60);
     });
 
     public final Group spreadDistance = group("spread_distance");
 
     public final Setting<Integer> spreadDistanceMin = spreadDistance.setting("min", 10_000, s -> {
-        BrigadierConnector.connect(s, BrigadierConnector.value(IntegerArgumentType.integer(0), DeathSwapConfig::formatTime));
+        BrigadierConnector.connect(s, BrigadierConnector.value(IntegerArgumentType.integer(0), ComponentFactoryRegistry.TICK_TO_TIME));
         ScreenConnector.intSlider(s, 0, 30_000);
     });
 
     public final Setting<Integer> spreadDistanceMax = spreadDistance.setting("max", 20_000, s -> {
-        BrigadierConnector.connect(s, BrigadierConnector.value(IntegerArgumentType.integer(0), DeathSwapConfig::formatTime));
+        BrigadierConnector.connect(s, BrigadierConnector.value(IntegerArgumentType.integer(0), ComponentFactoryRegistry.TICK_TO_TIME));
         ScreenConnector.intSlider(s, 0, 50_000);
     });
 
-    public final Setting<ResourceLocation> dimension = setting("dimension", Level.OVERWORLD.location(), ResourceLocation::toString, ResourceLocation::new, s -> {
+    public final Setting<ResourceLocation> dimension = setting("dimension", Level.OVERWORLD.location(), ConfigTypeFactoryRegistry.RESOURCE_LOCATION, s -> {
         BrigadierConnector.connect(s, BrigadierConnector.value(DimensionArgument.dimension()));
     });
 
-    public final Setting<Integer> resistanceTime = setting("resistance_time", DeathSwapConfig::formatTime, 20 * 15, s -> {
-        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), DeathSwapConfig::formatTime));
+    public final Setting<Integer> resistanceTime = setting("resistance_time", ComponentFactoryRegistry.TICK_TO_TIME, 20 * 15, s -> {
+        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), ComponentFactoryRegistry.TICK_TO_TIME));
         ScreenConnector.intSlider(s, 0, 20 * 60);
     });
 
-    public final Setting<Integer> maxStartFindTime = setting("max_start_find_time", DeathSwapConfig::formatTime, 20 * 60 * 5, s -> {
-        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), DeathSwapConfig::formatTime));
+    public final Setting<Integer> maxStartFindTime = setting("max_start_find_time", ComponentFactoryRegistry.TICK_TO_TIME, 20 * 60 * 5, s -> {
+        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), ComponentFactoryRegistry.TICK_TO_TIME));
         ScreenConnector.intSlider(s, 0, 20 * 60 * 10);
     });
 
@@ -131,14 +126,14 @@ public class DeathSwapConfig extends UniConfig {
         ScreenConnector.bool(s);
     });
 
-    public final Setting<Integer> teleportLoadTime = setting("teleport_load_time", DeathSwapConfig::formatTime, 20 * 5, s -> {
-        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), DeathSwapConfig::formatTime));
+    public final Setting<Integer> teleportLoadTime = setting("teleport_load_time", ComponentFactoryRegistry.TICK_TO_TIME, 20 * 5, s -> {
+        BrigadierConnector.connect(s, BrigadierConnector.value(TimeArgument.time(), ComponentFactoryRegistry.TICK_TO_TIME));
         ScreenConnector.intSlider(s, 0, 20 * 60);
     });
 
     public final Setting<Boolean> debug = setting("debug", false, BrigadierConnector::empty);
 
-    public final Setting<DeathSwapGameMode> gameMode = setting("game_mode", DeathSwapGameMode.NORMAL, Enum::toString, DeathSwapGameMode::valueOf, s -> {
+    public final Setting<DeathSwapGameMode> gameMode = setting("game_mode", DeathSwapGameMode.NORMAL, DEATH_SWAP_GAME_MODE, s -> {
         BrigadierConnector.connect(s, BrigadierConnector.enumValue(DeathSwapGameMode.class));
         ScreenConnector.enumCycle(s);
     });

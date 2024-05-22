@@ -1,116 +1,174 @@
+import xyz.wagyourtail.unimined.api.unimined
+
 plugins {
-    id("java")
-    id("xyz.wagyourtail.unimined") version "1.1.0"
+    id("xyz.wagyourtail.unimined") version "1.2.5-SNAPSHOT"
     `maven-publish`
 }
 
-operator fun String.invoke(): String? {
-    return project.properties[this] as String?
-}
-
-group = "maven_group"()!!
-version = if (project.hasProperty("version_snapshot")) project.properties["version"] as String + "-SNAPSHOT" else project.properties["version"] as String
-
-
 base {
-    archivesName.set("archives_base_name"()!!)
+    archivesName = project.properties["archives_base_name"] as String
+    group = project.properties["maven_group"] as String
+    version = project.properties["version"] as String
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 
-    withSourcesJar()
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
 }
+
+val enabledPlatforms: List<String> = project.properties["enabled_platforms"]?.toString()?.split(",") ?: emptyList()
 
 repositories {
-    maven("https://maven.wagyourtail.xyz/releases")
     mavenCentral()
-}
-
-val forge: SourceSet by sourceSets.creating {
-    compileClasspath += sourceSets.main.get().compileClasspath
-    runtimeClasspath += sourceSets.main.get().runtimeClasspath
-}
-val fabric: SourceSet by sourceSets.creating {
-    compileClasspath += sourceSets.main.get().compileClasspath
-    runtimeClasspath += sourceSets.main.get().runtimeClasspath
-}
-
-val testForge: SourceSet by sourceSets.creating {
-    compileClasspath += forge.output + sourceSets.test.get().compileClasspath
-    runtimeClasspath += forge.output + sourceSets.test.get().runtimeClasspath
-}
-
-val testFabric: SourceSet by sourceSets.creating {
-    compileClasspath += fabric.output + sourceSets.test.get().compileClasspath
-    runtimeClasspath += fabric.output + sourceSets.test.get().runtimeClasspath
+    maven("https://repo.spongepowered.org/maven")
 }
 
 unimined.minecraft(sourceSets.main.get(), sourceSets.test.get()) {
-    version("minecraft_version"()!!)
+    version(project.properties["minecraft_version"] as String)
 
     mappings {
         mojmap()
-        intermediary()
-        parchment("1.20.2", "2023.10.22")
+
+        devFallbackNamespace("official")
     }
+
+    accessWidener {
+
+    }
+
     defaultRemapJar = false
+}
 
-    minecraftRemapper.config {
-        ignoreConflicts(true)
+val fabricApiVersion = project.properties["fabric_api_version"] as String
+
+if (enabledPlatforms.contains("fabric")) {
+    val fabric by sourceSets.creating
+    val testFabric by sourceSets.creating {
+        compileClasspath += fabric.output + fabric.compileClasspath + sourceSets.test.get().output + sourceSets.test.get().compileClasspath
+        runtimeClasspath += fabric.output + fabric.runtimeClasspath + sourceSets.test.get().output + sourceSets.test.get().runtimeClasspath
+    }
+
+    configurations {
+        get("fabricImplementation").extendsFrom(configurations.getByName("implementation"))
+        get("fabricCompileOnly").extendsFrom(configurations.getByName("compileOnly"))
+
+        get("testFabricImplementation").extendsFrom(configurations.getByName("testImplementation"))
+        get("testFabricCompileOnly").extendsFrom(configurations.getByName("testCompileOnly"))
+    }
+
+    unimined.minecraft(fabric, testFabric) {
+        if (sourceSet == fabric) {
+            combineWith(sourceSets.main.get())
+        } else {
+            combineWith(sourceSets.test.get())
+        }
+        defaultRemapJar = true
+
+        fabric {
+            loader(project.properties["fabric_loader_version"] as String)
+        }
+    }
+
+    dependencies {
+        "fabricModImplementation"("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
+    }
+
+    tasks.named<ProcessResources>("processFabricResources") {
+        inputs.property("version", project.version)
+
+        filesMatching("fabric.mod.json") {
+            expand("version" to project.version)
+        }
+    }
+
+    tasks.named<ProcessResources>("processTestFabricResources") {
+        inputs.property("version", project.version)
+
+        filesMatching("fabric.mod.json") {
+            expand("version" to project.version)
+
+        }
+    }
+} else {
+    configurations {
+        create("fabricInclude")
+        create("fabricModImplementation")
+        create("testFabricModImplementation")
     }
 }
 
-unimined.minecraft(fabric) {
-    combineWith(sourceSets.main.get())
-
-    fabric {
-        loader("fabric_version"()!!)
+if (enabledPlatforms.contains("neoforge")) {
+    val neoforge by sourceSets.creating
+    val testNeoforge by sourceSets.creating {
+        compileClasspath += neoforge.output + neoforge.compileClasspath + sourceSets.test.get().output + sourceSets.test.get().compileClasspath
+        runtimeClasspath += neoforge.output + neoforge.runtimeClasspath + sourceSets.test.get().output + sourceSets.test.get().runtimeClasspath
     }
 
-    defaultRemapJar = true
-}
+    configurations {
+        get("neoforgeImplementation").extendsFrom(configurations.getByName("implementation"))
+        get("neoforgeCompileOnly").extendsFrom(configurations.getByName("compileOnly"))
 
-unimined.minecraft(forge) {
-    combineWith(sourceSets.main.get())
-
-    neoForged {
-        loader("forge_version"()!!)
+        get("testNeoforgeImplementation").extendsFrom(configurations.getByName("testImplementation"))
+        get("testNeoforgeCompileOnly").extendsFrom(configurations.getByName("testCompileOnly"))
     }
 
-    defaultRemapJar = true
-}
+    unimined.minecraft(neoforge, testNeoforge) {
+        if (sourceSet == neoforge) {
+            combineWith(sourceSets.main.get())
+        } else {
+            combineWith(sourceSets.test.get())
+        }
+        defaultRemapJar = true
 
-unimined.minecraft(testFabric) {
-    combineWith(sourceSets.test.get())
+        neoForged {
+            loader(project.properties["neoforge_version"] as String)
+        }
+    }
 
-    fabric {
-        loader("fabric_version"()!!)
+    tasks.named<ProcessResources>("processNeoforgeResources") {
+        inputs.property("version", project.version)
+
+        filesMatching("META-INF/neoforge.mods.toml") {
+            expand("version" to project.version)
+        }
+    }
+
+    tasks.named<ProcessResources>("processTestNeoforgeResources") {
+        inputs.property("version", project.version)
+
+        filesMatching("META-INF/neoforge.mods.toml") {
+            expand("version" to project.version)
+        }
+    }
+} else {
+    configurations {
+        create("neoforgeInclude")
+        create("neoforgeModImplementation")
+        create("testNeoforgeModImplementation")
     }
 }
 
-unimined.minecraft(testForge) {
-    combineWith(sourceSets.test.get())
 
-    neoForged {
-        loader("forge_version"()!!)
-    }
-}
+val fabric_api_version: String by project.properties
 
 dependencies {
+    compileOnly("org.spongepowered:mixin:0.8.5")
+    compileOnly("io.github.llamalad7:mixinextras-common:0.3.5")
+    compileOnly("org.ow2.asm:asm:9.5")
+    compileOnly("com.demonwav.mcdev:annotations:2.1.0")
+    compileOnly("org.jetbrains:annotations:24.0.1")
+    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
-    compileOnly("com.demonwav.mcdev:annotations:2.0.0")
-
-    "fabricInclude"("fabricModImplementation"(fabricApi.fabricModule("fabric-api-base", "fabric_api_version"()!!))!!)
+    "fabricInclude"("fabricModImplementation"(fabricApi.fabricModule("fabric-api-base", fabric_api_version))!!)
     "fabricInclude"(
         "fabricModImplementation"(
             fabricApi.fabricModule(
                 "fabric-resource-loader-v0",
-                "fabric_api_version"()!!
+                fabric_api_version
             )
         )!!
     )
@@ -118,60 +176,22 @@ dependencies {
         "fabricModImplementation"(
             fabricApi.fabricModule(
                 "fabric-command-api-v2",
-                "fabric_api_version"()!!
+                fabric_api_version
             )
         )!!
     )
 
-    "testFabricModImplementation"("net.fabricmc.fabric-api:fabric-api:${"fabric_api_version"()!!}")
+    "testFabricModImplementation"("net.fabricmc.fabric-api:fabric-api:${fabric_api_version}")
 
-    "fabricInclude"(implementation("com.electronwill.night-config:core:3.6.7") {})
-    "fabricInclude"(implementation("com.electronwill.night-config:toml:3.6.7") {})
-    "fabricInclude"(implementation("com.electronwill.night-config:yaml:3.6.7") {})
-    "fabricInclude"(implementation("com.electronwill.night-config:json:3.6.7") {})
-    "fabricInclude"(implementation("com.electronwill.night-config:hocon:3.6.7") {})
-
-    implementation("org.jetbrains:annotations:24.0.1")
-    implementation("com.google.code.findbugs:jsr305:3.0.2")
-
-
+    "fabricInclude"(implementation("com.electronwill.night-config:core:3.6.7")!!)
+    "fabricInclude"(implementation("com.electronwill.night-config:toml:3.6.7")!!)
+    "fabricInclude"(implementation("com.electronwill.night-config:yaml:3.6.7")!!)
+    "fabricInclude"(implementation("com.electronwill.night-config:json:3.6.7")!!)
+    "fabricInclude"(implementation("com.electronwill.night-config:hocon:3.6.7")!!)
 }
 
-tasks.withType<JavaCompile> {
-    options.release.set(17)
-}
-
-tasks.named<ProcessResources>("processFabricResources") {
-    inputs.property("version", project.version)
-
-    filesMatching("fabric.mod.json") {
-        expand("version" to project.version)
-    }
-}
-
-tasks.named<ProcessResources>("processTestFabricResources") {
-    inputs.property("version", project.version)
-
-    filesMatching("fabric.mod.json") {
-        expand("version" to project.version)
-    }
-}
-
-
-tasks.named<ProcessResources>("processForgeResources") {
-    inputs.property("version", project.version)
-
-    filesMatching("META-INF/mods.toml") {
-        expand("version" to project.version)
-    }
-}
-
-tasks.named<ProcessResources>("processTestForgeResources") {
-    inputs.property("version", project.version)
-
-    filesMatching("META-INF/mods.toml") {
-        expand("version" to project.version)
-    }
+java {
+    withSourcesJar()
 }
 
 publishing {
@@ -203,12 +223,16 @@ publishing {
                 classifier = "sources"
             }
 
-            artifact(tasks["remapForgeJar"]) {
-                classifier = "forge"
+            if (enabledPlatforms.contains("neoforge")) {
+                artifact(tasks["remapNeoforgeJar"]) {
+                    classifier = "neoforge"
+                }
             }
 
-            artifact(tasks["remapFabricJar"]) {
-                classifier = "fabric"
+            if (enabledPlatforms.contains("fabric")) {
+                artifact(tasks["remapFabricJar"]) {
+                    classifier = "fabric"
+                }
             }
         }
     }
